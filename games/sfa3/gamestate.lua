@@ -50,7 +50,7 @@ function gamestate.read_game_vars()
 	---------------------
 	-- current state
 	---------------------
-	--gamestate.curr_state 	= rw(addresses.global.curr_gamestate)
+	gamestate.curr_state 	= rb(addresses.global.curr_gamestate)
 	--gamestate.is_in_match 	= (rw(addresses.global.match_state) ~= 0)
 	---------------------
 	-- counters
@@ -75,7 +75,7 @@ function gamestate.stock_game_vars()
 	---------------------
 	-- current state
 	---------------------
-	--curr_state				= gamestate.curr_state,
+	curr_state				= gamestate.curr_state,
 	--is_in_match				= gamestate.is_in_match,
 	---------------------
 	-- counters
@@ -95,6 +95,11 @@ function gamestate.read_player_vars(_player_obj)
 	_player_obj.jump_animation			= rb(_player_obj.addresses.jump_animation)
 	_player_obj.counter_hit_related		= rb(_player_obj.addresses.counter_hit_related)
 	_player_obj.been_air_counter_hit	= ((rb(_player_obj.addresses.jump_animation) ~= 0x00 and rb(_player_obj.addresses.jump_animation) ~= 0x05 and rb(_player_obj.addresses.jump_animation) ~= 0xFB) or rb(0xFF888F) == 0x4C)
+	_player_obj.dizzy					= (rb(_player_obj.addresses.dizzy) == 0x01)	
+	_player_obj.stun_counter				= rb(_player_obj.addresses.stun_counter)
+	_player_obj.stun_meter				= rb(_player_obj.addresses.stun_meter)
+	_player_obj.stun_threshold			= rb(_player_obj.addresses.stun_threshold)
+	_player_obj.destun_meter			= rb(_player_obj.addresses.destun_meter)
 end
 
 function gamestate.stock_player_vars(_player_obj)
@@ -108,5 +113,10 @@ function gamestate.stock_player_vars(_player_obj)
 	jump					= _player_obj.jump,
 	counter_hit_related		= _player_obj.counter_hit_related,	
 	been_air_counter_hit	= _player_obj.been_air_counter_hit,
+	dizzy					= _player_obj.dizzy,
+	-- stun_counter				= _player_obj.stun_counter,
+	-- stun_meter				= _player_obj.stun_meter,
+	-- stun_threshold			= _player_obj.stun_threshold,
+	-- destun_meter				= _player_obj.destun_meter,
 	}
 end

@@ -9,10 +9,13 @@ if fexists("games/sfa3/customconfig.lua") then
 	dofile("games/sfa3/customconfig.lua")
 else
 	customconfig = {
-	counter_hit_selector = 0,
-	air_tech_selector = 0,
-	tech_type_selector = 0,
-	crouch_cancel_training_selector = 0,
+		counter_hit_selector = 0,
+		air_tech_selector = 0,
+		tech_type_selector = 0,
+		crouch_cancel_training_selector = 0,
+		nomusic_selector = -1,
+		stage_selector = 0,
+		draw_hud = -1,
 	}
 end
 
@@ -494,8 +497,155 @@ local function crouchCancelTraining()
 			crouch_cancel_step = 0
 		end
 	end
-end 
+end
+--------------------------
+-- Choosing a stage
+--------------------------
+-- stage_selector = customconfig.stage_selector
+stage_selector = 0
+local stageSelect = function()
+	if stage_selector == 0 then
+		return
+	end
+	if gamestate.curr_state == 0x02 then
+		wb(addresses.global.stage_select,stage_infos[stage_selector].id)
+	end
+end
+-----------------------------
+-- Enable/Disable background music
+-----------------------------
+nomusic_selector = customconfig.nomusic_selector
+local nomusicControl = function()
+	if nomusic_selector == -1 then
+		return
+	end
+	if nomusic_selector == 0 then
+		if gamestate.prev.curr_state == 0x04 and gamestate.curr_state == 0x06 then -- When the "FIGHT" message disappears
+			wb(0xFFEE81,0x20)
+			wb(0xFFEE83,0x20)
+		end
+	end
+end
+-----------------------
+--Dizzy meters
+---- -------------------
+--Determine the color of the bar based on the value (higher = darker)
+local function diz_col(val,max_val,type)
+	local color = 0x00000000
+	local mv = max_val/6
 
+	if type == 0 then
+		if val <= mv then
+			color = 0x00FF5DA0
+		elseif val <= mv*2 then
+			color = 0x54FF00A0
+		elseif val <= mv*3 then
+			color = 0xAEFF00A0
+		elseif val <= mv*4 then
+			color = 0xFAFF00A0
+		elseif val <= mv*5 then
+			color = 0xFF5400A0
+		else
+			color = 0xFF0026A0
+		end
+	else
+		if val <= mv then
+			color = 0x00FF5DA0
+		elseif val <= mv*2 then
+			color = 0x54FF00A0
+		elseif val <= mv*3 then
+			color = 0xAEFF00A0
+		elseif val <= mv*4 then
+			color = 0xFAFF00A0
+		elseif val <= mv*5 then
+			color = 0xFF5400A0
+		else
+			color = 0xFF0026A0
+		end
+	end
+	return color
+end
+
+local p1_dizzy_drawn = false
+local p2_dizzy_drawn = false
+
+local function draw_dizzy()
+	local p1_s = gamestate.P1.stun_meter
+	local p1_c = gamestate.P1.stun_counter
+	local p1_t = gamestate.P1.stun_threshold
+	local p1_d = gamestate.P1.destun_meter
+
+	local p2_s = gamestate.P2.stun_meter
+	local p2_c = gamestate.P2.stun_counter
+	local p2_t = gamestate.P2.stun_threshold
+	local p2_d = gamestate.P2.destun_meter
+	
+	gui.text(154,41,p1_s.."/"..p1_t)
+	gui.text(154,50,p1_c)
+	gui.box(35,45,150,49,0x00000040,0x000000FF)
+	gui.box(35,49,150,53,0x00000040,0x000000FF)
+		
+	gui.text(212,41,p2_s.."/"..p2_t)
+	gui.text(212,50,p2_c)
+	gui.box(233,45,348,49,0x00000040,0x000000FF)
+	gui.box(233,49,348,53,0x00000040,0x000000FF)
+
+	-- P1 Stun meter
+	if p1_s > 0 then
+		gui.box(35,45,(35+((115/gamestate.P1.stun_threshold)*p1_s)),49,diz_col(p1_s,p1_t,0),0x000000FF)
+	end
+
+	-- P1 Stun counter
+	if p1_c > 0 then
+		gui.box(35,49,(35+(0.45*p1_c)),53,diz_col(p1_c,255,1),0x000000FF)
+	end
+
+	-- P2 Stun meter
+	if p2_s > 0 then
+		gui.box(233,45,(233+((115/gamestate.P2.stun_threshold)*p2_s)),49,diz_col(p2_s,p2_t,0),0x000000FF)
+	end
+
+	-- P2 Stun counter
+	if p2_c > 0 then
+		gui.box(233,49,(233+(0.45*p2_c)),53,diz_col(p2_c,255,1),0x000000FF)
+	end
+
+	if gamestate.P1.dizzy then
+		gui.box(3,100,11,190,0x00000040,0x000000FF)
+		if p1_d > 0 then
+			gui.box(3,190,11,(190-(0.35*p1_d)),0xFF0000B0,0x00000000)
+		end
+		gui.text(3,192,p1_d)
+		p1_dizzy_drawn = true
+	else
+		p1_dizzy_drawn = false
+	end
+
+	if gamestate.P2.dizzy then
+		gui.box(370,100,378,190,0x00000040,0x000000FF)
+		if p2_d > 0 then
+			gui.box(370,190,378,(190-(0.35*p2_d)),0xFF0000B0,0x00000000)
+		end
+		gui.text(365,192,p2_d)
+		p2_dizzy_drawn = true
+	else
+		p2_dizzy_drawn = false
+	end
+end
+------------------
+-- Z3 HUD
+------------------
+draw_hud = customconfig.draw_hud
+local function renderZ3HUD()
+	if draw_hud < 0 then
+		return
+	else
+		draw_dizzy()
+	end
+end
+------------------
+-- Main
+------------------
 local function updateGamestate()
 	-- prev
 	gamestate.prev = gamestate.stock_game_vars()
@@ -512,6 +662,9 @@ local function Z3_Training_basic_settings()
 	setCounterHit()
 	autoRecover()
 	crouchCancelTraining()
+	stageSelect()
+	nomusicControl()
+	renderZ3HUD()
 end
 
 Z3_functions = {updateGamestate, Z3_Training_basic_settings, draw_messages}

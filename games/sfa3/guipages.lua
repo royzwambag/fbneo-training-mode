@@ -9,9 +9,32 @@ guicustompage = {
 	guielements.leftarrow,
 	guielements.rightarrow,
 	{
-		text = "Toggle Auto Counter Hit",
+		text = "Toggle Z3 HUD",
 		x = 8,
 		y = 30,
+		olcolour = "black",
+		handle = 1,
+		info = {
+			"Display Z3 specific informations",
+		},
+		func =	function()
+				draw_hud = draw_hud + 1
+				if draw_hud > 0 then
+					draw_hud = -1
+				end
+			end,
+		autofunc = function(this)
+				if draw_hud == -1 then
+					this.text = "Toggle Z3 HUD: Off"
+				elseif draw_hud == 0 then
+					this.text = "Toggle Z3 HUD: On"
+				end
+			end,
+	},
+	{
+		text = "Toggle Auto Counter Hit",
+		x = 8,
+		y = 50,
 		olcolour = "black",
 		handle = 1,
 		info = {
@@ -33,7 +56,7 @@ guicustompage = {
 	{
 		text = "Toggle Auto Air Tech",
 		x = 8,
-		y = 50,
+		y = 70,
 		olcolour = "black",
 		handle = 2,
 		info = {
@@ -54,8 +77,8 @@ guicustompage = {
 	},
 	{
 		text = "Air tech",
-		x = 170,
-		y = 50,
+		x = 150,
+		y = 70,
 		olcolour = "black",
 		handle = 3,
 		info = {
@@ -79,7 +102,7 @@ guicustompage = {
 	{
 		text = "Crouch Cancel Training",
 		x = 8,
-		y = 70,
+		y = 90,
 		olcolour = "black",
 		handle = 4,
 		info = {
@@ -100,6 +123,54 @@ guicustompage = {
 				end
 			end,
 	},
+	{
+		text = "Select stage",
+		x = 150,
+		y = 30,
+		olcolour = "black",
+		handle = 5,
+		info = {
+			"Background stage selection",
+			"Must be changed on player select screen, before selecting character."
+		},
+		func =	function()
+				stage_selector = stage_selector + 1
+				if stage_selector > #stage_infos then
+					stage_selector = 0
+				end
+			end,
+		autofunc = 	function(this)
+			if stage_selector == 0 then
+				this.text = "Select stage: Disabled"
+			else
+				this.text = "Select stage: "..stage_infos[stage_selector].name
+			end
+		end
+	},
+	{
+			text = "Disable Background Music",
+			x = 150,
+			y = 50,
+			handle = 6,
+			olcolour = "black",
+			info = {
+				"Disable background music",
+				"Must be changed on player select screen, before selecting character."
+			},
+			func =	function()
+					nomusic_selector = nomusic_selector + 1
+					if nomusic_selector > 0 then
+						nomusic_selector = -1
+					end
+				end,
+			autofunc = function(this)
+					if nomusic_selector == -1 then
+						this.text = "Disable Background Music: Off"
+					elseif nomusic_selector == 0 then
+						this.text = "Disable Background Music: On"
+					end
+				end,
+		},
 }
 ------------------------------------------
 -- Add-on

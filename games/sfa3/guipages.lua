@@ -42,14 +42,16 @@ guicustompage = {
 		func =	function()
 				counter_hit_selector = counter_hit_selector + 1
 				if counter_hit_selector > 1 then
-					counter_hit_selector = 0
+					counter_hit_selector = -1
 				end
 			end,
 		autofunc = function(this)
-				if counter_hit_selector == 0 then
+				if counter_hit_selector == -1 then
 					this.text = "Toggle Auto Counter Hit: Off"
+				elseif counter_hit_selector == 0 then
+					this.text = "Toggle Auto Counter Hit: P1"
 				elseif counter_hit_selector == 1 then
-					this.text = "Toggle Auto Counter Hit: On"
+					this.text = "Toggle Auto Counter Hit: P2"
 				end
 			end,
 	},
@@ -64,14 +66,16 @@ guicustompage = {
 		func =	function()
 				air_tech_selector = air_tech_selector + 1
 				if air_tech_selector > 1 then
-					air_tech_selector = 0
+					air_tech_selector = -1
 				end
 			end,
 		autofunc = function(this)
-				if air_tech_selector == 0 then
+				if air_tech_selector == -1 then
 					this.text = "Toggle Auto Air Tech: Off"
+				elseif air_tech_selector == 0 then
+					this.text = "Toggle Auto Air Tech: P1"
 				elseif air_tech_selector == 1 then
-					this.text = "Toggle Auto Air Tech: On"
+					this.text = "Toggle Auto Air Tech: P2"
 				end
 			end,
 	},
@@ -110,16 +114,16 @@ guicustompage = {
 		func =	function()
 				crouch_cancel_training_selector = crouch_cancel_training_selector + 1
 				if crouch_cancel_training_selector > 1 then
-					crouch_cancel_training_selector = 0
+					crouch_cancel_training_selector = -1
 				end
-				counter_hit_selector = 1
-				air_tech_selector = 1
 			end,
 		autofunc = function(this)
-				if crouch_cancel_training_selector == 0 then
+				if crouch_cancel_training_selector == -1 then
 					this.text = "Crouch Cancel Training: Off"
+				elseif crouch_cancel_training_selector == 0 then
+					this.text = "Crouch Cancel Training: P1"
 				elseif crouch_cancel_training_selector == 1 then
-					this.text = "Crouch Cancel Training: On"
+					this.text = "Crouch Cancel Training: P2"
 				end
 			end,
 	},

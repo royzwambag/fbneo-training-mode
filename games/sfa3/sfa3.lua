@@ -9,10 +9,10 @@ if fexists("games/sfa3/customconfig.lua") then
 	dofile("games/sfa3/customconfig.lua")
 else
 	customconfig = {
-		counter_hit_selector = 0,
-		air_tech_selector = 0,
+		counter_hit_selector = -1,
+		air_tech_selector = -1,
 		tech_type_selector = 0,
-		crouch_cancel_training_selector = 0,
+		crouch_cancel_training_selector = -1,
 		nomusic_selector = -1,
 		stage_selector = 0,
 		draw_hud = -1,
@@ -379,52 +379,79 @@ end
 -- Basic Z3 Functions
 --------------------------------
 --------------------------------
-counter_hit_selector = customconfig.counter_hit_selector
-
-local function setCounterHit()
-	if counter_hit_selector > 0 or crouch_cancel_training_selector > 0 then
-		if gamestate.P1.state == doing_normal_move or gamestate.P1.air_state == jump_attack or gamestate.P1.state == doing_special_move then
-			wb(gamestate.P2.addresses.is_attacking,0x01)
-			wb(gamestate.P2.addresses.counter_hit_related,0x00)
-		end 
-		if gamestate.P2.substate == being_hit then 
-			wb(gamestate.P2.addresses.is_attacking,0x00)
-			wb(gamestate.P2.addresses.counter_hit_related,0xFF)
-		end
+local function setCounterHit(_player_obj)
+	local attacker = _player_obj
+	local defender = {}
+	if attacker.id == 1 then
+		defender = gamestate.P2
+	elseif attacker.id == 2 then
+		defender = gamestate.P1
 	end
-end 
+	
+	if attacker.state == doing_normal_move or attacker.air_state == jump_attack or attacker.state == doing_special_move then
+		wb(defender.addresses.is_attacking,0x01)
+		wb(defender.addresses.counter_hit_related,0x00)
+	end 
+	if defender.substate == being_hit then 
+		wb(defender.addresses.is_attacking,0x00)
+		wb(defender.addresses.counter_hit_related,0xFF)
+	end
+end
+
+counter_hit_selector = customconfig.counter_hit_selector
+local function autoCounterHit()
+	if counter_hit_selector == 0 or crouch_cancel_training_selector == 0 then
+		setCounterHit(gamestate.P1)
+	elseif counter_hit_selector == 1 or crouch_cancel_training_selector == 1 then
+		setCounterHit(gamestate.P2)
+	end
+end
 
 air_tech_selector = customconfig.air_tech_selector
 tech_type_selector = customconfig.tech_type_selector
 local jump_error = 0
 
-local function autoRecover()
-	if air_tech_selector > 0 or crouch_cancel_training_selector > 0 then
-		if jump_error == 1 or (gamestate.P2.been_air_counter_hit and gamestate.P1.state == idle) then
-			inputs.properties.enablehold = false
-			if tech_type_selector == 0 then -- Neutral Tech
-				modifyInputSet(2,5,5,2,3)
-			elseif tech_type_selector == 1 then	-- Backward Tech
-				if gamestate.P2.flip_input then
-					modifyInputSet(2,4,5,2,3)
-				else
-					modifyInputSet(2,6,5,2,3)
-				end
-			elseif tech_type_selector == 2 then	-- Forward Tech
-				if gamestate.P2.flip_input then
-					modifyInputSet(2,6,5,2,3)
-				else
-					modifyInputSet(2,4,5,2,3)
-				end
+local function doRecover(_player_obj)
+	local attacker = _player_obj
+	local defender = {}
+	if attacker.id == 1 then
+		defender = gamestate.P2
+	elseif attacker.id == 2 then
+		defender = gamestate.P1
+	end
+	
+	if jump_error == 1 or (defender.been_air_counter_hit and attacker.state == idle) then
+		inputs.properties.enablehold = false
+		if tech_type_selector == 0 then -- Neutral Tech
+			modifyInputSet(defender.id,5,5,2,3)
+		elseif tech_type_selector == 1 then	-- Backward Tech
+			if defender.flip_input then
+				modifyInputSet(defender.id,4,5,2,3)
+			else
+				modifyInputSet(defender.id,6,5,2,3)
 			end
-		else
-			for i, _ in pairs(inputs.properties.p2hold) do
-				if inputs.properties.p2hold[i] then
-					inputs.properties.enablehold = true
-					return
-				end
+		elseif tech_type_selector == 2 then	-- Forward Tech
+			if defender.flip_input then
+				modifyInputSet(defender.id,6,5,2,3)
+			else
+				modifyInputSet(defender.id,4,5,2,3)
 			end
 		end
+	else
+		for i, _ in pairs(inputs.properties.p2hold) do
+			if inputs.properties.p2hold[i] then
+				inputs.properties.enablehold = true
+				return
+			end
+		end
+	end
+end
+
+local function autoRecover()
+	if air_tech_selector == 0 or crouch_cancel_training_selector == 1 then
+		doRecover(gamestate.P2)
+	elseif air_tech_selector == 1 or crouch_cancel_training_selector == 0 then
+		doRecover(gamestate.P1)
 	end
 end
 ---------------------------
@@ -432,70 +459,86 @@ end
 -- Crouch Cancel Training
 --------------------------
 ---------------------------
-crouch_cancel_training_selector = customconfig.crouch_cancel_training_selector
 local crouch_cancel_step = 0
+local function crouchCancelTraining(_player_obj)
 
-local function crouchCancelTraining()		
-	if crouch_cancel_training_selector > 0 then
-		if jump_error == 1 and not gamestate.P2.been_air_counter_hit then 
+	local attacker = _player_obj
+	local defender = {}
+	if attacker.id == 1 then
+		defender = gamestate.P2
+	elseif attacker.id == 2 then
+		defender = gamestate.P1
+	end
+	
+	if crouch_cancel_training_selector > -1 then
+		modifyInputSet(defender.id,8)
+		if jump_error == 1 and not defender.been_air_counter_hit then 
 			jump_error = 0
 		end 
 		
-		if crouch_cancel_step == 0 and gamestate.P2.been_air_counter_hit and gamestate.P1.state == jumping then 
+		if crouch_cancel_step == 0 and defender.been_air_counter_hit and attacker.state == jumping then 
 			crouch_cancel_step = 1
 		end 
 		
-		if crouch_cancel_step > 0 and gamestate.P1.state == 0x08 then 
+		if crouch_cancel_step > 0 and attacker.state == 0x08 then 
 			crouch_cancel_step = 0
 			update_msg(6)
 			return
 		end
 		
-		if crouch_cancel_step == 1 and gamestate.P1.prev.state == jumping and gamestate.P1.state == crouching then -- crouch_cancel_step 0 réussi : Le perso a atterri baissé 
+		if crouch_cancel_step == 1 and attacker.prev.state == jumping and attacker.state == crouching then -- crouch_cancel_step 0 réussi : Le perso a atterri baissé 
 			crouch_cancel_step = 2 
 			return
-		elseif crouch_cancel_step == 1 and gamestate.P1.prev.state == jumping and (gamestate.P1.state ~= crouching or gamestate.P1.state ~= v_trigger) then -- Echec au crouch_cancel_step 1 : Down n'a pas été maintenu 
-			if gamestate.P1.state ~= jumping then 
+		elseif crouch_cancel_step == 1 and attacker.prev.state == jumping and (attacker.state ~= crouching or attacker.state ~= v_trigger) then -- Echec au crouch_cancel_step 1 : Down n'a pas été maintenu 
+			if attacker.state ~= jumping then 
 				update_msg(1)
 				crouch_cancel_step = 0
-			elseif gamestate.P1.state == jumping and gamestate.P1.prev.air_state == 0x04 and gamestate.P1.air_state == 0x00 then -- Bug : Down n'a pas été maintenu mais le perso n'était pas considéré comme idle
+			elseif attacker.state == jumping and attacker.prev.air_state == 0x04 and attacker.air_state == 0x00 then -- Bug : Down n'a pas été maintenu mais le perso n'était pas considéré comme idle
 				update_msg(1)
 				crouch_cancel_step = 0
 				jump_error = 1
 			end 
 		end 
 	
-		if crouch_cancel_step == 2 and gamestate.P1.prev.state == crouching and gamestate.P1.state == jumping then  -- Crouch cancel réussi
+		if crouch_cancel_step == 2 and attacker.prev.state == crouching and attacker.state == jumping then  -- Crouch cancel réussi
 			update_msg(100)
 			crouch_cancel_step = 0 
 			return
-		elseif crouch_cancel_step == 2 and gamestate.P1.prev.state == crouching and gamestate.P1.state == walking then -- Tentative de walk cancel
+		elseif crouch_cancel_step == 2 and attacker.prev.state == crouching and attacker.state == walking then -- Tentative de walk cancel
 			crouch_cancel_step = 3 
 			return
-		elseif crouch_cancel_step == 2 and gamestate.P1.prev.state == crouching and gamestate.P1.state == 0x00 and (gamestate.P1.air_state) == 0x04 then  -- Echec au crouch_cancel_step 2. Le perso s'est accroupi
+		elseif crouch_cancel_step == 2 and attacker.prev.state == crouching and attacker.state == 0x00 and (attacker.air_state) == 0x04 then  -- Echec au crouch_cancel_step 2. Le perso s'est accroupi
 			update_msg(3)
 			crouch_cancel_step = 0
 			return
-		elseif crouch_cancel_step == 2 and gamestate.P1.prev.state == crouching and gamestate.P1.state == 0x00 then -- Echec au crouch_cancel_step 2. Le perso s'est relevé
+		elseif crouch_cancel_step == 2 and attacker.prev.state == crouching and attacker.state == 0x00 then -- Echec au crouch_cancel_step 2. Le perso s'est relevé
 			update_msg(4)
 			crouch_cancel_step = 0 
 			return 
-		elseif crouch_cancel_step == 2 and gamestate.P1.state == 0x00 then -- Echec au crouch_cancel_step 2 : Erreur générale, aucune tentative de walk ou de crouch cancel, mais le perso n'est pas idle pour autant
+		elseif crouch_cancel_step == 2 and attacker.state == 0x00 then -- Echec au crouch_cancel_step 2 : Erreur générale, aucune tentative de walk ou de crouch cancel, mais le perso n'est pas idle pour autant
 			update_msg(99)
 			crouch_cancel_step = 0
 			return
 		end 
 		
-		if crouch_cancel_step == 3 and (gamestate.P1.state == doing_normal_move or gamestate.P1.state == doing_special_move) then -- Walk cancel réussi
+		if crouch_cancel_step == 3 and (attacker.state == doing_normal_move or attacker.state == doing_special_move) then -- Walk cancel réussi
 			update_msg(101)
 			crouch_cancel_step = 0
-		elseif crouch_cancel_step == 3 and gamestate.P1.state == jumping then -- Crouch cancel réussi mais le perso a un peu avancé 
+		elseif crouch_cancel_step == 3 and attacker.state == jumping then -- Crouch cancel réussi mais le perso a un peu avancé 
 			update_msg(100)
 			crouch_cancel_step = 0
-		elseif crouch_cancel_step == 3 and gamestate.P1.state == idle then -- Echec au crouch_cancel_step 3. Le perso n'a pas attaqué assez vite
+		elseif crouch_cancel_step == 3 and attacker.state == idle then -- Echec au crouch_cancel_step 3. Le perso n'a pas attaqué assez vite
 			update_msg(5)
 			crouch_cancel_step = 0
 		end
+	end
+end
+crouch_cancel_training_selector = customconfig.crouch_cancel_training_selector
+local function toggleCrouchCancelTraining()
+	if crouch_cancel_training_selector == 0 then
+		crouchCancelTraining(gamestate.P1)
+	elseif crouch_cancel_training_selector == 1 then
+		crouchCancelTraining(gamestate.P2)
 	end
 end
 --------------------------
@@ -659,9 +702,9 @@ end
 
 local function Z3_Training_basic_settings()
 	infiniteTime()
-	setCounterHit()
+	autoCounterHit()
 	autoRecover()
-	crouchCancelTraining()
+	toggleCrouchCancelTraining()
 	stageSelect()
 	nomusicControl()
 	renderZ3HUD()

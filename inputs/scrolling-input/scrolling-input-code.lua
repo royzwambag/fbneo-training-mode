@@ -245,15 +245,26 @@ local function updaterecords(player, frame, nullinputcounters, activeinputcounte
 end
 
 -- added by zass, increment counters if frameskip
-local function checkframeskip()
-	frameskip_address = 0xFF801D
-	frameskip_prevval = frameskip_currval
-	frameskip_currval = memory.readbyte(frameskip_address)
-	local x = frameskip_currval - frameskip_prevval
-	if x % 2 == 0 then
-		was_frameskip = true
+local function checkframeskip(game)
+	if game == "ssf2xjr1" then
+		frameskip_address = 0xFF801D
+		frameskip_prevval = frameskip_currval
+		frameskip_currval = memory.readbyte(frameskip_address)
+		local x = frameskip_currval - frameskip_prevval
+		if x % 2 == 0 then
+			was_frameskip = true
+		else
+			was_frameskip = false
+		end
+	elseif game == "sfa3" then
+		frameskip_address = 0xFF8118
+		if memory.readbyte(frameskip_address) == 0xFF then
+			was_frameskip = true
+		else
+			was_frameskip = false
+		end
 	else
-		was_frameskip = false
+		return
 	end
 end
 
@@ -444,8 +455,8 @@ function scrollingInputRegAfter()
 	margin[3] = margin_top*icon_size
 	for player = 1, 2 do
 		thisframe = {}
-		if player == 1 and emu.romname() == "ssf2xjr1" then
-			checkframeskip() -- only check frameskip once
+		if player == 1 then
+			checkframeskip(emu.romname()) -- only check frameskip once
 		end
 		filterinput(player, thisframe)
 		compositeinput(thisframe)

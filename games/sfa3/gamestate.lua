@@ -8,8 +8,8 @@ require("games/sfa3/constants")
 gamestate = {
 frame_number = 0,
 --turbo = 0,
---curr_state = 0,
---is_in_match = false,
+curr_state = 0,
+is_in_match = false,
 --screen_x = 0,
 --screen_y = 0,
 --patched = false,
@@ -44,14 +44,14 @@ function gamestate.read_game_vars()
 	-- frame number and speed
 	--------------------------
 	gamestate.frame_number 	= rb(addresses.global.frame_number)
-	--gamestate.turbo 		= rb(addresses.global.turbo)
+	gamestate.turbo 		= rb(addresses.global.turbo)
 	--gamestate.frameskip		= rb(addresses.global.frameskip)
 	--gamestate.round_timer	= rb(addresses.global.round_timer)
 	---------------------
 	-- current state
 	---------------------
 	gamestate.curr_state 	= rb(addresses.global.curr_gamestate)
-	--gamestate.is_in_match 	= (rw(addresses.global.match_state) ~= 0)
+	gamestate.is_in_match 	= (gamestate.curr_state == 0x06)
 	---------------------
 	-- counters
 	---------------------
@@ -76,7 +76,7 @@ function gamestate.stock_game_vars()
 	-- current state
 	---------------------
 	curr_state				= gamestate.curr_state,
-	--is_in_match				= gamestate.is_in_match,
+	is_in_match				= gamestate.is_in_match,
 	---------------------
 	-- counters
 	---------------------
@@ -88,18 +88,33 @@ function gamestate.read_player_vars(_player_obj)
 	_player_obj.state  					= rb(_player_obj.addresses.state)
 	_player_obj.substate  				= rb(_player_obj.addresses.substate)
 	_player_obj.air_state				= rb(_player_obj.addresses.air_state)
-	_player_obj.pos_x					= rb(_player_obj.addresses.pos_x)
-	--_player_obj.pos_y					= rb(_player_obj.addresses.pos_y)
+	_player_obj.pos_x					= rw(_player_obj.addresses.pos_x)
+	_player_obj.pos_y					= rw(_player_obj.addresses.pos_y)
 	_player_obj.flip_input				= (rb(_player_obj.addresses.flip_x) == 1)
-	_player_obj.is_attacking			= rb(_player_obj.addresses.is_attacking)
+	_player_obj.normal_move				= (rb(_player_obj.addresses.normal_move) == 0x01)
+	_player_obj.special_move			= (rb(_player_obj.addresses.special_move) == 0x01)
+	_player_obj.super_move				= (rb(_player_obj.addresses.super_move) == 0x01)
+	_player_obj.projectile_ready		= (rb(_player_obj.addresses.projectile_ready) == 0x01)
+	_player_obj.is_attacking			= (_player_obj.normal_move or _player_obj.special_move or  _player_obj.super_move)
+	--_player_obj.guard_regen			= rb(_player_obj.addresses.guard_regen)
+	_player_obj.guard_meter				= rb(_player_obj.addresses.guard_meter)
+	_player_obj.guard_damage			= rb(_player_obj.addresses.guard_damage)
 	_player_obj.jump_animation			= rb(_player_obj.addresses.jump_animation)
 	_player_obj.counter_hit_related		= rb(_player_obj.addresses.counter_hit_related)
 	_player_obj.been_air_counter_hit	= ((rb(_player_obj.addresses.jump_animation) ~= 0x00 and rb(_player_obj.addresses.jump_animation) ~= 0x05 and rb(_player_obj.addresses.jump_animation) ~= 0xFB) or rb(0xFF888F) == 0x4C)
-	_player_obj.dizzy					= (rb(_player_obj.addresses.dizzy) == 0x01)	
-	_player_obj.stun_counter				= rb(_player_obj.addresses.stun_counter)
+	_player_obj.character				= rb(_player_obj.addresses.character)
+	_player_obj.ism						= rb(_player_obj.addresses.ism)
+	_player_obj.dizzy					= (rb(_player_obj.addresses.dizzy) == 0x01)
+	_player_obj.air_tech				= rb(_player_obj.addresses.air_tech)
+	_player_obj.hitfreeze_counter		= rb(_player_obj.addresses.hitfreeze_counter)
+	_player_obj.hitfreeze_counter		= rb(_player_obj.addresses.hitfreeze_counter)
+	_player_obj.in_hitfreeze			= (_player_obj.hitfreeze_counter ~= 0)
+	_player_obj.stun_counter			= rb(_player_obj.addresses.stun_counter)
 	_player_obj.stun_meter				= rb(_player_obj.addresses.stun_meter)
 	_player_obj.stun_threshold			= rb(_player_obj.addresses.stun_threshold)
 	_player_obj.destun_meter			= rb(_player_obj.addresses.destun_meter)
+	_player_obj.curr_input				= rw(_player_obj.addresses.curr_input)
+	_player_obj.prev_input				= rw(_player_obj.addresses.prev_input)
 end
 
 function gamestate.stock_player_vars(_player_obj)
@@ -108,15 +123,28 @@ function gamestate.stock_player_vars(_player_obj)
 	substate				= _player_obj.substate,
 	air_state				= _player_obj.air_state,
 	pos_x					= _player_obj.pos_x,
-	--pos_y					= _player_obj.pos_y,
+	pos_y					= _player_obj.pos_y,
+	-- normal_move				= _player_obj.normal_move,
+	-- special_move				= _player_obj.special_move,
+	-- super_move				= _player_obj.super_move,
+	projectile_ready		= _player_obj.projectile_ready,
 	is_attacking			= _player_obj.is_attacking,
+	-- guard_regen				= _player_obj.guard_regen,
+	-- guard_meter				= _player_obj.guard_meter,
+	-- guard_damage			= _player_obj.guard_damage,	
 	jump					= _player_obj.jump,
 	counter_hit_related		= _player_obj.counter_hit_related,	
 	been_air_counter_hit	= _player_obj.been_air_counter_hit,
+	-- character			= _player_obj.character,
+	-- ism					= _player_obj.ism,
+	-- air_tech				= _player_obj.air_tech,
 	dizzy					= _player_obj.dizzy,
+	-- stun_counter				= _player_obj.hitfreeze_counter,
 	-- stun_counter				= _player_obj.stun_counter,
 	-- stun_meter				= _player_obj.stun_meter,
 	-- stun_threshold			= _player_obj.stun_threshold,
 	-- destun_meter				= _player_obj.destun_meter,
+	-- curr_input				= _player_obj.curr_input,
+	-- prev_input				= _player_obj.prev_input,
 	}
 end

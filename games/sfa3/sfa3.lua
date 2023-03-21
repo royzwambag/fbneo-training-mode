@@ -91,7 +91,7 @@ translationtable = {
 	["Coin"] = 11,
 	["Start"] = 12,
 }
-
+print("ok")
 gamedefaultconfig = {
 	hud = {
 		combotextx=179,
@@ -109,6 +109,24 @@ gamedefaultconfig = {
 		p2meterx=205,
 		p2metery=210,
 		p2meterenabled=true,
+	},
+	inputs = {
+		iconsize=8,
+		framenumbersenabled=true,
+		scrollinginputxoffset={2,335},
+		scrollinginputyoffset={65,65},
+	},
+	p1 = {
+		instantrefillhealth=false,
+		refillhealthenabled=true,
+		instantrefillmeter=true,
+		refillmeterenabled=true,
+	},
+	p2 = {
+		instantrefillhealth=false,
+		refillhealthenabled=true,
+		instantrefillmeter=true,
+		refillmeterenabled=true,
 	},
 }
 

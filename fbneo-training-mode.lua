@@ -1337,7 +1337,7 @@ local combinePlayerInputs = function(P1, P2, other)
 	return t
 end
 
-local toggleSwapInputs = function(bool, vargs)
+toggleSwapInputs = function(bool, vargs)
 	if bool==nil then inputs.properties.enableinputswap = not inputs.properties.enableinputswap
 	else inputs.properties.enableinputswap = bool end
 	if vargs then vargs.swapinputs = false end

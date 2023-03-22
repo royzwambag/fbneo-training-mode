@@ -1609,63 +1609,45 @@ function clearInputSet(player)
 	setInputs()
 end 
 
-function modifyInputSet(player, ...)
+function modifyInputSet(_player_obj, ...)
 	inputs.properties.enableinputset = true 
-	local dir1, dir2, button1, button2, button3, button4, button5, button6 = ...
-	if type(dir1)=="number" then
-		local a = {{"Down", "Left"}, {"Down"}, {"Down", "Right"}, {"Left"}, {}, {"Right"}, {"Up", "Left"}, {"Up"}, {"Up", "Right"}} -- numpad
-		dir2 = a[dir1][2]
-		dir1 = a[dir1][1]
-	end
-	local a = {{"Weak Punch"}, {"Medium Punch"}, {"Strong Punch"}, {"Weak Kick"}, {"Medium Kick"}, {"Strong Kick"}}
-	if type(button1) =="number" then
-		button1 = a[button1][1]
-	end
-	if type(button2) =="number" then
-		button2 = a[button2][1]
-	end
-	if type(button3) =="number" then
-		button3 = a[button3][1]
-	end
-	if type(button4) =="number" then
-		button4 = a[button4][1]
-	end
-	if type(button5) =="number" then
-		button5 = a[button5][1]
-	end
-	if type(button6) =="number" then
-		button6 = a[button6][1]
-	end
+	local dir, button1, button2, button3, button4, button5, button6 = ...
+	local dir1, dir2 = nil
+	local buttons = {button1, button2, button3, button4, button5, button6}
+	local direction_set = {{"Down", "Left"}, {"Down"}, {"Down", "Right"}, {"Left"}, {}, {"Right"}, {"Up", "Left"}, {"Up"}, {"Up", "Right"}} -- numpad
+	local button_set = {{"Weak Punch"}, {"Medium Punch"}, {"Strong Punch"}, {"Weak Kick"}, {"Medium Kick"}, {"Strong Kick"}}
 	
-	
-	if player == 1 then 
-		if dir1 then inputs.setinputs["P1 "..dir1] = true end
-		if dir2 then inputs.setinputs["P1 "..dir2] = true end
-		if button1 then inputs.setinputs["P1 "..button1] = true end
-		if button2 then inputs.setinputs["P1 "..button2] = true end
-		if button3 then inputs.setinputs["P1 "..button3] = true end
-		if button4 then inputs.setinputs["P1 "..button4] = true end
-		if button5 then inputs.setinputs["P1 "..button5] = true end
-		if button6 then inputs.setinputs["P1 "..button6] = true end
+	if type(dir) == "number" then
+		if direction_set[dir][2] ~= nil then
+			dir2 = direction_set[dir][2]
+		end
+		dir1 = direction_set[dir][1]
+	elseif type(dir) == "table" then
+		dir1 = dir[1]
+		if dir[2] then dir2 = dir[2] end
 	end
 
-	if player == 2 then
-		if dir1 then inputs.setinputs["P2 "..dir1] = true end
-		if dir2 then inputs.setinputs["P2 "..dir2] = true end
-		if button1 then inputs.setinputs["P2 "..button1] = true end
-		if button2 then inputs.setinputs["P2 "..button2] = true end
-		if button3 then inputs.setinputs["P2 "..button3] = true end
-		if button4 then inputs.setinputs["P2 "..button4] = true end
-		if button5 then inputs.setinputs["P2 "..button5] = true end
-		if button6 then inputs.setinputs["P2 "..button6] = true end
+	for i = 1, #buttons do
+		if type(buttons[i]) == "number" then
+			buttons[i] = button_set[buttons[i]][1]
+		end
+	end
+
+	if dir1 then inputs.setinputs[_player_obj.prefix.." "..dir1] = true end
+	if dir2 then inputs.setinputs[_player_obj.prefix.." "..dir2] = true end
+	for i = 1, #buttons do
+		if buttons[i] then
+			inputs.setinputs[_player_obj.prefix.." "..buttons[i]] = true
+		end
 	end
 	
 	setInputs()
 end
 
 function do_special_move(_player_obj, _special, _variation, easy_special_status)
-	local dir1 = 5 -- numpad neutral
-	local dir2 = 5
+	local dir1 = nil -- numpad neutral
+	local dir2 = nil
+	local dir = {}
 	local button1 = ""
 	local button2 = ""
 	local button3 = ""
@@ -1688,6 +1670,7 @@ function do_special_move(_player_obj, _special, _variation, easy_special_status)
 				dir2 = sequence_input_to_key(_stick, _player_obj.flip_input)
 			end
 		end
+		dir = {dir1, dir2}
 		for i, _button in pairs(_special.input_variations[_variation]) do
 			if i == 1 then
 				button1 = sequence_input_to_key(_button, _player_obj.flip_input)
@@ -1708,5 +1691,5 @@ function do_special_move(_player_obj, _special, _variation, easy_special_status)
 			end
 		end
 	end
-	modifyInputSet(_player_obj.id, dir1, dir2, button1, button2, button3)
+	modifyInputSet(_player_obj, dir, button1, button2, button3)
 end

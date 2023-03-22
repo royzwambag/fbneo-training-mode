@@ -28,6 +28,14 @@ addresses = {
       base 	= 0xFF884E,
       input = 0xFF808A,
     }
+  },
+  projectiles = {
+	{
+		base = 0xFF9CE2,
+	},
+	{
+		base = 0xFFA0E2,
+	}
   }
 }
 

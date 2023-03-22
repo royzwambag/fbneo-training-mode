@@ -6,35 +6,34 @@ require("games/ssf2xjr1/memory_addresses")
 require("games/ssf2xjr1/constants")
 
 gamestate = {
-frame_number = 0,
-turbo = 0,
-curr_state = 0,
-is_in_match = false,
-screen_x = 0,
-screen_y = 0,
-patched = false,
-player_objects = {},
+	frame_number = 0,
+	turbo = 0,
+	curr_state = 0,
+	is_in_match = false,
+	screen_x = 0,
+	screen_y = 0,
+	patched = false,
+	player_objects = {},
 
-P1 = nil,
-P2 = nil,
-hit_counter = 0
+	P1 = nil,
+	P2 = nil,
+	hit_counter = 0
 }
 
 function make_player_object(_id, _base, _prefix)
 	return {
-	id = _id,
-	base = _base,
-	addresses = addresses.players[_id],
-	prefix = _prefix,
+		id = _id,
+		base = _base,
+		addresses = addresses.players[_id],
+		prefix = _prefix,
 	}
 end
 
 function gamestate.reset_player_objects()
 	gamestate.player_objects = {
-	make_player_object(1, addresses.players[1].base, "P1"),
-	make_player_object(2, addresses.players[2].base, "P2")
+		make_player_object(1, addresses.players[1].base, "P1"),
+		make_player_object(2, addresses.players[2].base, "P2")
 	}
-
 	gamestate.P1 = gamestate.player_objects[1]
 	gamestate.P2 = gamestate.player_objects[2]
 end
@@ -138,10 +137,12 @@ function gamestate.read_player_vars(_player_obj)
 	-----------------
 	-- Position
 	-----------------
-	_player_obj.pos_x  				= rw(_player_obj.addresses.pos_x)
-	_player_obj.pos_y  				= rw(_player_obj.addresses.pos_y)
-	_player_obj.flip_input 			= (rb(_player_obj.addresses.flip_x) == 0x01)
-	_player_obj.is_cornered			= (rb(_player_obj.addresses.cornered_flag) == 0x01 or rb(_player_obj.addresses.cornered_flag) == 0x02)
+	_player_obj.pos_x  					= rw(_player_obj.addresses.pos_x)
+	_player_obj.pos_y  					= rw(_player_obj.addresses.pos_y)
+	_player_obj.screen_relative_pos_x	= _player_obj.pos_x - gamestate.screen_x
+	_player_obj.screen_relative_pos_y	= emu.screenheight() - (_player_obj.pos_y - 15) + gamestate.screen_y
+	_player_obj.flip_input 				= (rb(_player_obj.addresses.flip_x) == 0x01)
+	_player_obj.is_cornered				= (rb(_player_obj.addresses.cornered_flag) == 0x01 or rb(_player_obj.addresses.cornered_flag) == 0x02)
 	-----------------
 	-- Character
 	-----------------
@@ -179,7 +180,7 @@ function gamestate.read_player_vars(_player_obj)
 	-----------------
 	_player_obj.animation_id 			= memory.readdword(_player_obj.addresses.animation_ptr)
 	_player_obj.animation_frames_left	= rb(_player_obj.addresses.animation_frames_left)
-	-- _player_obj.hitbox_id	 		= memory.readdword(_player_obj.addresses.hitbox_ptr )
+	_player_obj.hitbox_id	 			= memory.readdword(_player_obj.addresses.hitbox_ptr)
 	_player_obj.is_attacking			= isAttacking(_player_obj)
 	_player_obj.hurting_move			= rb(_player_obj.addresses.attack_flag) > 0x00
 	-----------------
@@ -187,7 +188,11 @@ function gamestate.read_player_vars(_player_obj)
 	-----------------
 	_player_obj.curr_input 			= rw(_player_obj.addresses.curr_input)
 	_player_obj.prev_input 			= rw(_player_obj.addresses.prev_input)
-end 
+end
+
+function gamestate.initialize_advanced_player_vars(_player_obj)
+	_player_obj.boxes = {} -- defined in "st-hitboxes.lua"
+end
 
 function gamestate.stock_player_vars(_player_obj)
 	return {
@@ -215,6 +220,8 @@ function gamestate.stock_player_vars(_player_obj)
 	-----------------
 	pos_x							= _player_obj.pos_x,
 	pos_y							= _player_obj.pos_y,
+	--screen_relative_pos_x			= _player_obj.screen_relative_pos_x,
+	--screen_relative_pos_y			= _player_obj.screen_relative_pos_y,
 	flip_input						= _player_obj.flip_input,
 	is_cornered						= _player_obj.is_cornered,
 	-----------------
@@ -235,7 +242,7 @@ function gamestate.stock_player_vars(_player_obj)
 	-----------------
 	-- Throw related
 	-----------------
-	throw_flag 					= _player_obj.throw_flag,
+	throw_flag 						= _player_obj.throw_flag,
 	--grab_flag 					= _player_obj.grab_flag,
 	--grab_break 					= _player_obj.grab_break,
 	--grab_strength 				= _player_obj.grab_strength,
@@ -251,6 +258,7 @@ function gamestate.stock_player_vars(_player_obj)
 	animation_id 					= _player_obj.animation_id,
 	animation_frames_left			= _player_obj.animation_frames_left,
 	--hitbox_id						= _player_obj.hitbox_id,
+	--boxes							= _player_obj.boxes
 	is_attacking					= _player_obj.is_attacking,
 	hurting_move					= _player_obj.hurting_move,
 	-----------------

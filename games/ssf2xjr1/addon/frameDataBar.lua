@@ -1,6 +1,4 @@
 -- Should be moved outside of add-ons once it'll be finished
-local framedata_bar_selector = 0
-
 framedata_bar_button = {
 		text = "Framedata Bar",
 		olcolour = "black",
@@ -371,9 +369,6 @@ end
 local function frameDataBar()
 	if framedata_bar_selector > 0 then
 		if gamestate.is_in_match then
-			-- Should be moved in ssf2xjr1 once finished
-			updateGameObjectBoxes(gamestate.P1)
-			updateGameObjectBoxes(gamestate.P2)
 			-- Draw Framedata Bar
 			for i = 1, 2 do
 				for k = 1, bar_length do

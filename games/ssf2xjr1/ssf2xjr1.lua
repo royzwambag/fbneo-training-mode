@@ -19,7 +19,7 @@ if not fexists("games/ssf2xjr1/customconfig_replay.lua") then
 	file:write("draw_hud = -1\nframe_advantage_selector = -1\nframe_trap_selector = -1\nnomusic_selector = -1\ncrossup_display_selector = -1\nsafe_jump_display_selector = -1\ntick_throw_display_selector = -1")
 	file:close()
 end
-
+framedata_bar_selector = 0
 local function loadReplayConfig()
 	if REPLAY then
 		if not replay_config then
@@ -114,14 +114,22 @@ local first_load = true
 math.randomseed(os.time())
 math.random(); math.random(); math.random()
 --
-gamestate.reset_player_objects()
 gamestate.read_game_vars()
 gamestate.update_patch()
-gamestate.read_player_vars(gamestate.P1)
-gamestate.read_player_vars(gamestate.P2)
-gamestate.prev	  = gamestate.stock_game_vars()
-gamestate.P1.prev = gamestate.stock_player_vars(gamestate.P1)
-gamestate.P2.prev = gamestate.stock_player_vars(gamestate.P2)
+gamestate.prev = gamestate.stock_game_vars()
+
+gamestate.reset_player_objects()
+
+player = {
+	gamestate.P1,
+	gamestate.P2
+}
+
+for i = 1, 2 do
+	gamestate.read_player_vars(player[i])
+	player[i].prev = gamestate.stock_player_vars(player[i])
+	gamestate.initialize_advanced_player_vars(player[i])
+end
 
 local previous_patch  = gamestate.patched
 local current_patch   = gamestate.patched
@@ -563,6 +571,39 @@ local function draw_messages()
 	gui.text(get_player_msg_x(gamestate.P2),get_player_msg_y(gamestate.P2)+10,player_msg2[2])
 end
 
+-------------
+-- Hotkeys
+-------------
+local hotkeys_functions = {}
+
+function newHotkey(_key,_func,_desc)
+	local key_name = {"LP", "MP", "HP", "LK", "MK", "HK"}
+	local translation = {"button1", "button2", "button3", "button4", "button5", "button6"}
+	for i = 1, #key_name do if _key == key_name[i] then _key = translation[i] end end
+	local new_func = function() if guiinputs.P1[_key] and not guiinputs.P1.previousinputs[_key] then _func() end end
+	table.insert(hotkeys_functions, {func = new_func, desc = _desc})
+end
+
+local function startHotkeys()
+	if gamestate.is_in_match then
+		if guiinputs.P1.start then
+			-- Disable P1 input detection
+			setFrameskip(false)
+			ww(addresses.players[1].input, 0x0000)
+			local x = 20
+			local y = 40
+			for i = 1, #hotkeys_functions do
+				hotkeys_functions[i].func()
+				if string.find(hotkeys_functions[i].desc, "%uK") then x = 210 else x = 20 end
+				if string.find(hotkeys_functions[i].desc, "L%u") then y = 40 end
+				if string.find(hotkeys_functions[i].desc, "M%u") then y = 50 end
+				if string.find(hotkeys_functions[i].desc, "H%u") then y = 60 end
+				gui.text(x,y, hotkeys_functions[i].desc)
+			end
+		end
+	end
+end
+-- Misc
 function str(bool)
 	if bool then
 		return "true"
@@ -2571,7 +2612,6 @@ local p2DizzyControl = function()
 	ww(0xFF88AA, dizzy) -- timeout
 	ww(0xFF88AC, dizzy) -- damage
 end
-
 -------------------------------------
 -- Round Start Training made by pof
 -------------------------------------
@@ -2654,33 +2694,22 @@ local p1_locked = false
 local p2_locked = false
 local p1_lock_distance = 0
 local p2_lock_distance = 0
-local start_input = false
-local prev_start_input = false
+
+local function lockSelector()
+	lock_selector = lock_selector + 1
+	p1_locked = false
+	p2_locked = false
+
+	if lock_selector > 3 then
+		lock_selector = 0
+	end
+end
 
 local function lockCharacters()
 	if REPLAY then return end
-	if first_load then
-		print("Lock the characters with Start")
-	end
 	if not gamestate.is_in_match then
 		lock_selector = 0
 		return
-	end
-
-	local joypad = joypad.get()
-	start_input = joypad["P1 Start"]
-
-	if start_input then
-		prev_start_input = true
-	end
-	if prev_start_input and not start_input then
-		lock_selector = lock_selector + 1
-		prev_start_input = false
-		p1_locked = false
-		p2_locked = false
-	end
-	if lock_selector > 3 then
-		lock_selector = 0
 	end
 
 	if lock_selector == 0 then
@@ -2716,6 +2745,7 @@ local function lockCharacters()
 		p2_locked = true
 	end
 end
+newHotkey("LP",lockSelector, "LP : Lock a character's position")
 ------------------------------------
 -- Enable/Disable Auto Tech Throws
 ------------------------------------
@@ -2725,7 +2755,7 @@ local function techThrowControl()
 	if REPLAY then return end
 	if tech_throw_selector == 0 then
 		if gamestate.P1.throw_flag == 0x01 then
-			modifyInputSet(2,6,5,3)
+			modifyInputSet(gamestate.P2,6,3)
 			wb(gamestate.P2.addresses.grab_break, 0x00) -- will now automatically escape hold throws
 		end
 	end
@@ -4162,12 +4192,10 @@ local function detectSafeJump(_player_obj)
 			recovery_count[defender.id] = countFrames(recovery_count[defender.id])
 		else
 			if jump_duration[attacker.id] >= recovery_count[defender.id] then -- If the attacker lands (or would have landed) after the defender recovered
-				if getReversalStartup(defender) ~= nil then
-					if jump_duration[attacker.id]-recovery_count[defender.id] <= getReversalStartup(defender) then -- Check if the attacker lands (or would have landed) before the reversal's active frames
-						player_msg2[attacker.id] = "Safe jump"
-					else
-						player_msg2[attacker.id] = "Too late ("..jump_duration[attacker.id]-recovery_count[defender.id].."f)"
-					end
+				if jump_duration[attacker.id]-recovery_count[defender.id] <= getReversalStartup(defender) then -- Check if the attacker lands (or would have landed) before the reversal's active frames
+					player_msg2[attacker.id] = "Safe jump"
+				else
+					player_msg2[attacker.id] = "Too late ("..jump_duration[attacker.id]-recovery_count[defender.id].."f)"
 				end
 			else -- If the attacker lands before the defender recovers
 				player_msg2[attacker.id] = "Too soon ("..recovery_count[defender.id]-jump_duration[attacker.id].."f)"
@@ -4259,36 +4287,36 @@ local function throwProjectile(_projectile_id)
 		elseif character == "chunli" then
 			if (rb(0xFF84CE+p2) < 0x04 and gamestate.P2.projectile_ready) or (projectile_frequence_selector == -1 and not gamestate.P2.projectile_ready and easy_charge_moves_selector <= 0) or (projectile_frequence_selector == 0 and projectile_delay < 0)then
 				if gamestate.P2.flip_input then
-					modifyInputSet(2,1)
+					modifyInputSet(gamestate.P2,1)
 				else
-					modifyInputSet(2,3)
+					modifyInputSet(gamestate.P2,3)
 				end
 			elseif rb(0xFF84CE+p2) == 0x04 then
-				modifyInputSet(2,5)
+				modifyInputSet(gamestate.P2,5)
 			elseif rb(0xFF84CE+p2) == 0x06 then
 				ready_to_fire = true
 			end
 		elseif character == "deejay" then
 			if (rb(0xFF84E0+p2) < 0x04 and gamestate.P2.projectile_ready) or (projectile_frequence_selector == -1 and not gamestate.P2.projectile_ready and easy_charge_moves_selector <= 0) or (projectile_frequence_selector == 0 and projectile_delay < 0)then
 				if gamestate.P2.flip_input then
-					modifyInputSet(2,1)
+					modifyInputSet(gamestate.P2,1)
 				else
-					modifyInputSet(2,3)
+					modifyInputSet(gamestate.P2,3)
 				end
 			elseif rb(0xFF84E0+p2) == 0x04 then
-				modifyInputSet(2,5)
+				modifyInputSet(gamestate.P2,5)
 			elseif rb(0xFF84E0+p2) == 0x06 then
 				ready_to_fire = true
 			end
 		elseif character == "guile" then
 			if (rb(0xFF84CE+p2) < 0x04 and gamestate.P2.projectile_ready) or (projectile_frequence_selector == -1 and not gamestate.P2.projectile_ready and easy_charge_moves_selector <= 0) or (projectile_frequence_selector == 0 and projectile_delay < 0)then
 			if gamestate.P2.flip_input then
-					modifyInputSet(2,1)
+					modifyInputSet(gamestate.P2,1)
 				else
-					modifyInputSet(2,3)
+					modifyInputSet(gamestate.P2,3)
 				end
 			elseif rb(0xFF84CE+p2) == 0x04 then
-				modifyInputSet(2,5)
+				modifyInputSet(gamestate.P2,5)
 			elseif rb(0xFF84CE+p2) == 0x06 then
 				ready_to_fire = true
 			end
@@ -4457,6 +4485,7 @@ local function ST_Training_advanced_settings()
 	safeJumpDisplay()
 	projectileTraining()
 	roundStart()
+	startHotkeys()
 end
 
 local function ST_Training_misc()

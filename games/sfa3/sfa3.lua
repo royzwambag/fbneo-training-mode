@@ -911,6 +911,17 @@ local function calc_range()
 	return range
 end
 
+--Determines if a special cancel can be performed after a normal move has been executed
+local function check_cancel(_player_obj)
+	local text
+	if _player_obj.cancel_ready then
+		text = "Ready"
+	else
+		text = "Not Ready"
+	end
+	return text
+end
+
 draw_hud = customconfig.draw_hud
 local function renderZ3HUD()
 	if draw_hud < 0 then
@@ -923,10 +934,12 @@ local function renderZ3HUD()
 		gui.text(6,13,"X/Y: ")
 		gui.text(2,21,gamestate.P1.pos_x .. "," .. gamestate.P1.pos_y)
 		gui.text(150,26,gamestate.P1.guard_meter-gamestate.P1.guard_damage.."/"..gamestate.P1.guard_meter)
+		gui.text(8,200,"Cancel: " .. check_cancel(gamestate.P1))
 		--P2
 		gui.text(363,13,"X/Y: ")
 		gui.text(356,21,gamestate.P2.pos_x .. "," .. gamestate.P2.pos_y)
 		gui.text(215,26,gamestate.P2.guard_meter-gamestate.P2.guard_damage.."/"..gamestate.P2.guard_meter)
+		gui.text(310,200,"Cancel: " .. check_cancel(gamestate.P2))
 	end
 end
 

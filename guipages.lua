@@ -938,7 +938,7 @@ local addonpage1 = {
 		info = "Back",
 		func =  function()
 			interactivegui.page = 1
-			interactivegui.selection = 7
+			interactivegui.selection = 1
 		end,
 	},
 }
@@ -991,9 +991,7 @@ function insertAddonButton(addon_button) -- Could be improved to create as many 
 	local _addonpage = nil
 	addon_nb = addon_nb + 1
 
-	if addon_nb == 1 then
-		table.insert(addonpage1, addonbutton)
-	elseif addon_nb == 15 then
+	if addon_nb == 15 then
 		table.insert(addonpage1, addonnextpage)
 	end
 

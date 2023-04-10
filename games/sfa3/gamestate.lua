@@ -95,7 +95,12 @@ function gamestate.read_player_vars(_player_obj)
 	_player_obj.special_move			= (rb(_player_obj.addresses.special_move) == 0x01)
 	_player_obj.super_move				= (rb(_player_obj.addresses.super_move) == 0x01)
 	_player_obj.projectile_ready		= (rb(_player_obj.addresses.projectile_ready) == 0x01)
+<<<<<<< HEAD
+	_player_obj.special_cancel_ready	= (rb(_player_obj.addresses.special_cancel_ready) > 0x00)
+	_player_obj.super_cancel_ready		= (rb(_player_obj.addresses.super_cancel_ready) > 0x00)
+=======
 	_player_obj.cancel_ready			= (rb(_player_obj.addresses.cancel_ready) > 0x00)
+>>>>>>> 57f862227796cfa452a11b484f2d94392f761ead
 	_player_obj.is_attacking			= (_player_obj.normal_move or _player_obj.special_move or  _player_obj.super_move)
 	--_player_obj.guard_regen			= rb(_player_obj.addresses.guard_regen)
 	_player_obj.guard_meter				= rb(_player_obj.addresses.guard_meter)
@@ -108,7 +113,8 @@ function gamestate.read_player_vars(_player_obj)
 	_player_obj.dizzy					= (rb(_player_obj.addresses.dizzy) == 0x01)
 	_player_obj.air_tech				= rb(_player_obj.addresses.air_tech)
 	_player_obj.hitfreeze_counter		= rb(_player_obj.addresses.hitfreeze_counter)
-	_player_obj.hitfreeze_counter		= rb(_player_obj.addresses.hitfreeze_counter)
+	_player_obj.hitstun_counter		    = rb(_player_obj.addresses.hitstun_counter)
+	_player_obj.hitstun_related		    = rb(_player_obj.addresses.hitstun_related)
 	_player_obj.in_hitfreeze			= (_player_obj.hitfreeze_counter ~= 0)
 	_player_obj.stun_counter			= rb(_player_obj.addresses.stun_counter)
 	_player_obj.stun_meter				= rb(_player_obj.addresses.stun_meter)
@@ -128,6 +134,8 @@ function gamestate.stock_player_vars(_player_obj)
 	-- normal_move				= _player_obj.normal_move,
 	-- special_move				= _player_obj.special_move,
 	-- super_move				= _player_obj.super_move,
+	-- special_cancel_ready		= _player_obj.special_cancel_ready,
+	-- super_cancel_ready		= _player_obj.super_cancel_ready,
 	projectile_ready		= _player_obj.projectile_ready,
 	is_attacking			= _player_obj.is_attacking,
 	-- guard_regen				= _player_obj.guard_regen,
@@ -140,7 +148,10 @@ function gamestate.stock_player_vars(_player_obj)
 	-- ism					= _player_obj.ism,
 	-- air_tech				= _player_obj.air_tech,
 	dizzy					= _player_obj.dizzy,
-	-- stun_counter				= _player_obj.hitfreeze_counter,
+	hitfreeze_counter		= _player_obj.hitfreeze_counter,
+	in_hitfreeze			= _player_obj.in_hitfreeze,
+	-- hitstun_counter			= _player_obj.hitstun_counter,
+	-- hitstun_related		    = _player_objhitstun_related,
 	-- stun_counter				= _player_obj.stun_counter,
 	-- stun_meter				= _player_obj.stun_meter,
 	-- stun_threshold			= _player_obj.stun_threshold,

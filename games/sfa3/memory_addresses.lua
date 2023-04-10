@@ -47,11 +47,18 @@ for i = 1, 2 do
   addresses.players[i].ism		  			= addresses.players[i].base + 0x132  -- byte
   addresses.players[i].super_move  			= addresses.players[i].base + 0x216  -- byte
   addresses.players[i].projectile_ready		= addresses.players[i].base + 0x238  -- byte
+<<<<<<< HEAD
+  addresses.players[i].hitstun_related		= addresses.players[i].base + 0x23D  -- byte
+  addresses.players[i].special_cancel_ready	= addresses.players[i].base + 0x23E  -- byte
+=======
   addresses.players[i].cancel_ready			= addresses.players[i].base + 0x23E  -- byte
+>>>>>>> 57f862227796cfa452a11b484f2d94392f761ead
   addresses.players[i].guard_regen		    = addresses.players[i].base + 0x24B  -- byte  
   addresses.players[i].guard_meter	        = addresses.players[i].base + 0x24C  -- byte
   addresses.players[i].guard_damage         = addresses.players[i].base + 0x24D  -- byte
+  addresses.players[i].hitstun_counter      = addresses.players[i].base + 0x269  -- byte
   addresses.players[i].air_tech             = addresses.players[i].base + 0x27A  -- byte
+  addresses.players[i].super_cancel_ready	= addresses.players[i].base + 0x293  -- byte
   addresses.players[i].dizzy        		= addresses.players[i].base + 0x2CF  -- byte  
   addresses.players[i].stun_counter	        = addresses.players[i].base + 0x2CB  -- byte
   addresses.players[i].stun_meter          	= addresses.players[i].base + 0x2CC  -- byte

@@ -914,7 +914,6 @@ end
 --Determines if a special cancel can be performed after a normal move has been executed
 local function check_cancel(_player_obj)
 	local text
-<<<<<<< HEAD
 	if _player_obj.special_cancel_ready then 
 		if _player_obj.super_cancel_ready then
 			text = "Ready"
@@ -923,10 +922,6 @@ local function check_cancel(_player_obj)
 		end
 	elseif _player_obj.super_cancel_ready then
 		text = "Ready (Super)"
-=======
-	if _player_obj.cancel_ready then
-		text = "Ready"
->>>>>>> 57f862227796cfa452a11b484f2d94392f761ead
 	else
 		text = "Not Ready"
 	end
@@ -945,20 +940,12 @@ local function renderZ3HUD()
 		gui.text(6,13,"X/Y: ")
 		gui.text(2,21,gamestate.P1.pos_x .. "," .. gamestate.P1.pos_y)
 		gui.text(150,26,gamestate.P1.guard_meter-gamestate.P1.guard_damage.."/"..gamestate.P1.guard_meter)
-<<<<<<< HEAD
 		gui.text(8,200,"Cancel: "..check_cancel(gamestate.P1))
-=======
-		gui.text(8,200,"Cancel: " .. check_cancel(gamestate.P1))
->>>>>>> 57f862227796cfa452a11b484f2d94392f761ead
 		--P2
 		gui.text(363,13,"X/Y: ")
 		gui.text(356,21,gamestate.P2.pos_x .. "," .. gamestate.P2.pos_y)
 		gui.text(215,26,gamestate.P2.guard_meter-gamestate.P2.guard_damage.."/"..gamestate.P2.guard_meter)
-<<<<<<< HEAD
 		gui.text(310,200,"Cancel: "..check_cancel(gamestate.P2))
-=======
-		gui.text(310,200,"Cancel: " .. check_cancel(gamestate.P2))
->>>>>>> 57f862227796cfa452a11b484f2d94392f761ead
 	end
 end
 

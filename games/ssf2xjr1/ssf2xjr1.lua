@@ -144,7 +144,7 @@ local function updatePatch()
 	end
 end
 
-local player = {
+player = {
 	gamestate.P1,
 	gamestate.P2
 }
@@ -248,7 +248,6 @@ function isCharacterLeft(_player_obj)
 	end
 end
 
--- used by peon --
 function playerOneFacingLeft()
 	return gamestate.P1.pos_x >= gamestate.P2.pos_x
 end
@@ -256,15 +255,25 @@ end
 function playerTwoFacingLeft()
 	return gamestate.P1.pos_x < gamestate.P2.pos_x
 end
----------------------------------
 
-getDistanceBetweenPlayers = function()
+function getDistanceBetweenPlayers()
 	if playerOneFacingLeft() then
 		distance = gamestate.P1.pos_x - gamestate.P2.pos_x
 	else
 		distance = gamestate.P2.pos_x - gamestate.P1.pos_x
 	end
 	return distance
+end
+
+function displayZone(min, max, color, func) -- display a specific distance from P2
+	local flip = 1
+	if not playerOneFacingLeft() then flip = -1 end
+	local x1 = min*flip + gamestate.P2.screen_relative_pos_x
+	local x2 = max*flip + gamestate.P2.screen_relative_pos_x
+	gui.box(x1, 200,x2, 207, color)
+	if func then
+		func()
+	end
 end
 
 function playerCrouching(_player_obj)
@@ -281,6 +290,85 @@ function playerCrouching(_player_obj)
 		end
 	end
 	return false
+end
+
+-- Reading the move currently performed by a character
+move_part = {
+	{name = "startup", prefix = "S"},
+	{name = "active", prefix = "A"},
+	{name = "recover", prefix = "R"}
+}
+
+function isJump(_move_name) -- Return true if the move is a jump
+	if _move_name:find("JN") or _move_name:find("J ") then
+		return true
+	else
+		return false
+	end
+end
+
+function updateCurrMove(_player_obj) -- stock in _player_obj.move the name of the move performed
+	if _player_obj.is_attacking then
+		local movelist = character_specific[readCharacterName(_player_obj)].move_details
+		for k, v in pairs(movelist) do
+			local move = movelist[k]
+			local key_anim = {first = nil, last = nil}
+			for i = 1, #move_part do
+				if move[move_part[i].name] then
+					if key_anim.first == nil then
+						key_anim.first = move[move_part[i].name][1].animation
+					end
+					key_anim.last = move[move_part[i].name][#move[move_part[i].name]].animation
+				elseif i == #move_part and not key_anim.first and not key_anim.last then
+					-- key_anim.first = move[1].animation
+					-- key_anim.last = move[#move].animation
+				end
+			end
+			if key_anim.first and key_anim.last then
+				if _player_obj.animation_id >= key_anim.first and _player_obj.animation_id <= key_anim.last then
+					_player_obj.move = k
+					if isJump(k) then
+						local _jump_version = getJumpVersion(_player_obj)
+						if _jump_version == "backward" then
+							_player_obj.move = _player_obj.move.."_B"
+						elseif _jump_version == "forward" then
+							_player_obj.move = _player_obj.move.."_F"
+						end
+					end
+					return
+				end
+			end
+		end
+	end
+end
+
+function readMove(_player_obj, _move_name) -- Returns true if _player_obj is currently performing _move_name
+	local move = character_specific[readCharacterName(_player_obj)].move_details[_move_name]
+	local key_anim = {first = nil, last = nil}
+	for i = 1, #move_part do
+		if move[move_part[i].name] then
+			if key_anim.first == nil then
+				key_anim.first = move[move_part[i].name][1].animation
+			end
+			key_anim.last = move[move_part[i].name][#move[move_part[i].name]].animation
+		elseif i == #move_part and not key_anim.first and not key_anim.last then
+			key_anim.first = move[1].animation
+			key_anim.last = move[#move].animation
+		end
+	end
+	if _player_obj.animation_id >= key_anim.first and _player_obj.animation_id <= key_anim.last then
+		return true
+	else
+		return false
+	end
+end
+
+function readAnim(_player_obj, _move_name, _move_part, _anim) -- Returns true if _player_obj is currently in the animation described in argument
+	if _player_obj.animation_id == character_specific[readCharacterName(_player_obj)].move_details[_move_name][_move_part][_anim].animation then
+		return true
+	else
+		return false
+	end
 end
 ---------------------
 -- Game related
@@ -512,11 +600,11 @@ function reset_player_msg2(player)
 	end
 end
 
-local function get_player_msg_x(_player_obj)
+function get_player_msg_x(_player_obj)
 	return (_player_obj.pos_x-gamestate.screen_x)-15
 end
 
-local function get_player_msg_y(_player_obj)
+function get_player_msg_y(_player_obj)
 	local character = _player_obj.character
 	local screen_y = 0
 	
@@ -1341,7 +1429,7 @@ local p2_dizzy_drawn = false
 
 local function draw_dizzy()
 
-	local p1_s = gamestate.P1.stun_meter
+	local hitstun = gamestate.P1.stun_meter
 	local p1_c = gamestate.P1.stun_counter
 	local p1_d = gamestate.P1.destun_meter
 
@@ -1350,13 +1438,13 @@ local function draw_dizzy()
 	local p2_d = gamestate.P2.destun_meter
 
 	-- P1 Stun meter
-	if p1_s > 0 then
-		if p1_s <= 10 then
-			gui.box(35,45,(35+(3.38 * p1_s)),49,diz_col(p1_s,0),0x000000FF)
-		elseif p1_s > 10 and p1_s <= 20 then
-			gui.box(35,45,(35+(3.38 * p1_s)),49,diz_col(p1_s,0),0x000000FF)
-		elseif p1_s > 20 then
-			gui.box(35,45,(35+(3.38 * p1_s)),49,diz_col(p1_s,0),0x000000FF)
+	if hitstun > 0 then
+		if hitstun <= 10 then
+			gui.box(35,45,(35+(3.38 * hitstun)),49,diz_col(hitstun,0),0x000000FF)
+		elseif hitstun > 10 and hitstun <= 20 then
+			gui.box(35,45,(35+(3.38 * hitstun)),49,diz_col(hitstun,0),0x000000FF)
+		elseif hitstun > 20 then
+			gui.box(35,45,(35+(3.38 * hitstun)),49,diz_col(hitstun,0),0x000000FF)
 		end
 	end
 
@@ -3955,185 +4043,6 @@ end
 -- Safe Jump Display
 ---------------------------------
 safe_jump_display_selector = customconfig.safe_jump_display_selector
-
----------------------------------------------------
--- Maybe should be be moved in character_specific.lua
----------------------------------------------------
-local function getJumpVersion(_player_obj) -- Returns neutral, back or forward
-	--
-	local DEBUG = false
-	--
-	local character = _player_obj.character
-	local left = isCharacterLeft(_player_obj)
-	local jump_x_coeff = 0
-	if _player_obj.id == 1 then
-		jump_x_coeff = rb(0xFF848A)
-	elseif _player_obj.id == 2 then
-		jump_x_coeff = rb(0xFF888A)
-	end
-	--
-	if DEBUG then
-		print("0x"..string.format("%x",jump_x_coeff))
-	end
-	--
-	if jump_x_coeff == 0x00 then
-		return "neutral"
-	elseif character == Dhalsim or character == Hawk or character == Sagat or character == Zangief then 
-		if jump_x_coeff == 0xFD then
-			if left then
-				return "back"
-			else
-				return "forward"
-			end
-		elseif jump_x_coeff == 0x02 or (character == Hawk and jump_x_coeff == 0x03) then -- Hawk 0x3 when right
-			if left then
-				return "forward"
-			else
-				return "back"
-			end
-		end
-	elseif character == Chun or character == Dictator then
-		if jump_x_coeff == 0xFB then
-			if left then
-				return "back"
-			else
-				return "forward"
-			end
-		elseif jump_x_coeff == 0x04 or (character == Dictator and jump_x_coeff == 0x05) then -- Dicta 0x05 when right
-			if left then
-				return "forward"
-			else
-				return "back"
-			end
-		end
-	elseif character == Claw then
-		if jump_x_coeff == 0xFA or jump_x_coeff == 0xFB then -- Claw 0xFB when right
-			if left then
-				return "back"
-			else
-				return "forward"
-			end
-		elseif jump_x_coeff == 0x05 then
-			if left then
-				return "forward"
-			else
-				return "back"
-			end
-		end
-	else
-		if jump_x_coeff == 0xFC or (character == Boxer and jump_x_coeff == 0xFD) then -- Boxer 0xFD when right
-			if left then
-				return "back"
-			else
-				return "forward"
-			end
-		elseif jump_x_coeff == 0x03 or ((character == DJ or character == Fei or character == Guile or character == Ken or character == Ryu) and jump_x_coeff == 0x04) then -- Shoto, Guile, Fei and DJ 0x4 when right
-			if left then
-				return "forward"
-			else
-				return "back"
-			end
-		end
-	end
-end
-
-local function getJumpDuration(_player_obj, _jump_version) -- Returns the total of uncancellable jump frames
-	--
-	local character = _player_obj.character
-	local old = _player_obj.is_old
-	local duration = 0
-	--
-	if _jump_version == "neutral" then
-		if character == Claw then
-			duration = 42
-		elseif character == Blanka or (character == Sagat and old) then
-			duration = 45
-		elseif character == Hawk or (character == Sagat and not old) then
-			duration = 47
-		elseif character == Zangief then
-			duration = 48
-		elseif character == Boxer or (character == DJ and not old) or character == Fei or (old and (character == Ken or character == Ryu)) then
-			duration = 49
-		elseif character == Chun or (not old and (character == Ken or character == Ryu)) then
-			duration = 50
-		elseif character == Honda or (character == DJ and old) then
-			duration = 51
-		elseif character == Cammy or character == Dictator then
-			duration = 52
-		elseif character == Guile then
-			duration = 53
-		elseif character == Dhalsim then
-			duration = 67
-		end
-	elseif _jump_version == "back" then
-		if character == Claw then
-			duration = 42
-		elseif character == Blanka or character == Hawk then
-			duration = 46
-		elseif (character == Sagat and old) then
-			duration = 47
-		elseif old and (character == Ken or character == Ryu) then
-			duration = 48
-		elseif character == Ken or character == Ryu or character == Sagat or character == Zangief then
-			duration = 49
-		elseif character == Boxer or (character == DJ and not old) or character == Fei then
-			duration = 50
-		elseif character == Chun or character == Honda then
-			duration = 51
-		elseif character == Cammy or (character == DJ and old) then
-			duration = 52
-		elseif character == Dictator or character == Guile then
-			duration = 53
-		elseif character == Dhalsim then
-			duration = 68
-		end
-	elseif _jump_version == "forward" then
-		if character == Claw then
-			duration = 41
-		elseif character == Blanka or (character == Sagat and old) then
-			duration = 44
-		elseif character == Fei or character == Hawk or character == Zangief or (character == DJ and old) or (character == Sagat and not old) then
-			duration = 46
-		elseif character == Boxer or (character == DJ and not old) or (old and (character == Ken or character == Ryu)) then
-			duration = 48
-		elseif not old and (character == Ken or character == Ryu) then
-			duration = 49
-		elseif character == Cammy or character == Chun or character == Honda then
-			duration = 50
-		elseif character == Dictator then
-			duration = 51
-		elseif character == Guile then
-			duration = 52
-		end
-	end
-
-	return duration
-end
-
-local function getReversalStartup(_player_obj)
-	--
-	local character = _player_obj.character
-	local old = _player_obj.is_old
-	local has_super = (_player_obj.special_meter == 48)
-	--
-	if character == Chun and not old then
-		return 2
-	elseif character == Sagat then
-		return 3
-	elseif character == Cammy or character == DJ or character == Hawk or character == Ryu then
-		return 4
-	elseif character == Guile or (character == Claw and not old) then
-		return 5
-	elseif character == Fei or character == Honda or (character == Boxer and has_super) then
-		return 6
-	elseif character == Dictator and has_super then
-		return 9
-	elseif character == Boxer and not has_super then
-		return 11
-	elseif character == Chun and old then
-		return 17
-	end
-end
 ---------------------
 -- Detect Safe Jump
 ---------------------
@@ -4389,7 +4298,6 @@ local function projectileTraining()
 	stockProjectilesChecked()
 	throwProjectilesLogic()
 end
-
 ------------------------------------------
 ------------------------------------------
 -- Display the relevant options

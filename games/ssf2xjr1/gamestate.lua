@@ -192,6 +192,7 @@ end
 
 function gamestate.initialize_advanced_player_vars(_player_obj)
 	_player_obj.boxes = {} -- defined in "st-hitboxes.lua"
+	_player_obj.move = "" -- defined in addons/InGameHitboxViewer.lua
 end
 
 function gamestate.stock_player_vars(_player_obj)
@@ -259,6 +260,7 @@ function gamestate.stock_player_vars(_player_obj)
 	animation_frames_left			= _player_obj.animation_frames_left,
 	--hitbox_id						= _player_obj.hitbox_id,
 	--boxes							= _player_obj.boxes
+	move							= _player_obj.move,
 	is_attacking					= _player_obj.is_attacking,
 	hurting_move					= _player_obj.hurting_move,
 	-----------------

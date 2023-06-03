@@ -31,10 +31,10 @@ addresses = {
   },
   projectiles = {
 	{
-		base = 0xFF9CE2,
+		base = 0xFF9CE2,--base = 0xFF9C22,
 	},
 	{
-		base = 0xFFA0E2,
+		base = 0xFF9CE2,
 	}
   }
 }
@@ -69,6 +69,7 @@ for i = 1, 2 do
   addresses.players[i].attack_flag        	= addresses.players[i].base + 0x18B -- byte
   addresses.players[i].special_cancel      	= addresses.players[i].base + 0x195 -- byte
   addresses.players[i].life_hud       		= addresses.players[i].base + 0x1BC -- word
+  addresses.players[i].min_dist_from_screen	= addresses.players[i].base + 0x1C3 -- byte
   addresses.players[i].projectile_ready     = addresses.players[i].base + 0x1D4 -- byte
   addresses.players[i].dizzy_flag		    = addresses.players[i].base + 0x1F0 -- word
   addresses.players[i].combo_counter	    = addresses.players[i].base + 0x1F4 -- byte

@@ -1522,81 +1522,96 @@ function determineThrowInput(_throw)
 end
 
 function getJumpVersion(_player_obj) -- Returns neutral, back or forward
-	--
-	local DEBUG = false
-	--
-	local character = _player_obj.character
 	local left = isCharacterLeft(_player_obj)
-	local jump_x_coeff = 0
-	if _player_obj.id == 1 then
-		jump_x_coeff = rb(0xFF848A)
-	elseif _player_obj.id == 2 then
-		jump_x_coeff = rb(0xFF888A)
-	end
-	--
-	if DEBUG then
-		print("0x"..string.format("%x",jump_x_coeff))
-	end
-	--
-	if jump_x_coeff == 0x00 then
-		return "neutral"
-	elseif character == Dhalsim or character == Hawk or character == Sagat or character == Zangief then 
-		if jump_x_coeff == 0xFD then
-			if left then
-				return "back"
-			else
-				return "forward"
-			end
-		elseif jump_x_coeff == 0x02 or (character == Hawk and jump_x_coeff == 0x03) then -- Hawk 0x3 when right
-			if left then
-				return "forward"
-			else
-				return "back"
-			end
-		end
-	elseif character == Chun or character == Dictator then
-		if jump_x_coeff == 0xFB then
-			if left then
-				return "back"
-			else
-				return "forward"
-			end
-		elseif jump_x_coeff == 0x04 or (character == Dictator and jump_x_coeff == 0x05) then -- Dicta 0x05 when right
-			if left then
-				return "forward"
-			else
-				return "back"
-			end
-		end
-	elseif character == Claw then
-		if jump_x_coeff == 0xFA or jump_x_coeff == 0xFB then -- Claw 0xFB when right
-			if left then
-				return "back"
-			else
-				return "forward"
-			end
-		elseif jump_x_coeff == 0x05 then
-			if left then
-				return "forward"
-			else
-				return "back"
-			end
+	local coeff = rb(0xFF845F)
+	
+	if left then
+		if coeff == 0x01 then
+			return "forward"
+		elseif coeff == 0x00 then
+			return "backward"
 		end
 	else
-		if jump_x_coeff == 0xFC or (character == Boxer and jump_x_coeff == 0xFD) then -- Boxer 0xFD when right
-			if left then
-				return "back"
-			else
-				return "forward"
-			end
-		elseif jump_x_coeff == 0x03 or ((character == DJ or character == Fei or character == Guile or character == Ken or character == Ryu) and jump_x_coeff == 0x04) then -- Shoto, Guile, Fei and DJ 0x4 when right
-			if left then
-				return "forward"
-			else
-				return "back"
-			end
+		if coeff == 0x01 then
+			return "backward"
+		elseif coeff == 0x00 then
+			return "forward"
 		end
 	end
+	-- local DEBUG = false
+	
+	-- local character = _player_obj.character
+	-- local left = isCharacterLeft(_player_obj)
+	-- local jump_x_coeff = 0
+	-- if _player_obj.id == 1 then
+		-- jump_x_coeff = rb(0xFF848A)
+	-- elseif _player_obj.id == 2 then
+		-- jump_x_coeff = rb(0xFF888A)
+	-- end
+	
+	-- if DEBUG then
+		-- print("0x"..string.format("%x",jump_x_coeff))
+	-- end
+	
+	-- if jump_x_coeff == 0x00 then
+		-- return "neutral"
+	-- elseif character == Dhalsim or character == Hawk or character == Sagat or character == Zangief then 
+		-- if jump_x_coeff == 0xFD then
+			-- if left then
+				-- return "back"
+			-- else
+				-- return "forward"
+			-- end
+		-- elseif jump_x_coeff == 0x02 or (character == Hawk and jump_x_coeff == 0x03) then -- Hawk 0x3 when right
+			-- if left then
+				-- return "forward"
+			-- else
+				-- return "back"
+			-- end
+		-- end
+	-- elseif character == Chun or character == Dictator then
+		-- if jump_x_coeff == 0xFB then
+			-- if left then
+				-- return "back"
+			-- else
+				-- return "forward"
+			-- end
+		-- elseif jump_x_coeff == 0x04 or (character == Dictator and jump_x_coeff == 0x05) then -- Dicta 0x05 when right
+			-- if left then
+				-- return "forward"
+			-- else
+				-- return "back"
+			-- end
+		-- end
+	-- elseif character == Claw then
+		-- if jump_x_coeff == 0xFA or jump_x_coeff == 0xFB then -- Claw 0xFB when right
+			-- if left then
+				-- return "back"
+			-- else
+				-- return "forward"
+			-- end
+		-- elseif jump_x_coeff == 0x05 then
+			-- if left then
+				-- return "forward"
+			-- else
+				-- return "back"
+			-- end
+		-- end
+	-- else
+		-- if jump_x_coeff == 0xFC or (character == Boxer and jump_x_coeff == 0xFD) then -- Boxer 0xFD when right
+			-- if left then
+				-- return "back"
+			-- else
+				-- return "forward"
+			-- end
+		-- elseif jump_x_coeff == 0x03 or ((character == DJ or character == Fei or character == Guile or character == Ken or character == Ryu) and jump_x_coeff == 0x04) then -- Shoto, Guile, Fei and DJ 0x4 when right
+			-- if left then
+				-- return "forward"
+			-- else
+				-- return "back"
+			-- end
+		-- end
+	-- end
 end
 
 function getJumpDuration(_player_obj, _jump_version) -- Returns the total of uncancellable jump frames

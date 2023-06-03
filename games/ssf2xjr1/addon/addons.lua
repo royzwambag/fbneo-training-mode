@@ -7,6 +7,9 @@ addons_run = {
 	"walkSuper.lua",
 	"mashing.lua",
 	"frameDataBar.lua",
-	-- "inGameHitboxViewer.lua",
-	-- "scrap.lua",
+	"inGameHitboxViewer.lua",
+	"scrap.lua",
+	"displayHitstun.lua",
+	"displayZoneInReplay.lua",
+	"comboTrialsWIP.lua",
 }

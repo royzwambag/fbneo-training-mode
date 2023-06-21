@@ -20,6 +20,8 @@ local comboMoveStatusColors = {
 local ryuCombosArray = {"J HK_F", "Cr HK", "Hadouken HP"}
 local ryuCombosArray2 = {"Cr LK", "Cr LK", "Cr LK"}
 
+local bh1 = ''
+local bh2 = ''
 local comboStatus = 'standby'
 local comboRestart = false
 local showErrorReady = false
@@ -59,6 +61,7 @@ local function printTrial()
 		end
 		gui.text(60, 50 + 10 * i, ryuCombosArray2[i], color)
 	end
+	gui.text(60, 50 + 10 * 7, "comboStatus: "..comboStatus)
 end
 
 local function updateComboStep(newStep)
@@ -66,6 +69,11 @@ local function updateComboStep(newStep)
 		comboStep = newStep
 	end
 end
+local d1 = ''
+local d2 = ''
+local d2 = ''
+local d2 = ''
+local d2 = ''
 
 local function comboTrials()
 	-- Initialization
@@ -92,29 +100,45 @@ local function comboTrials()
 			-- gui.text(60, 50 + 10 * 8, "lastmove: "..lastMove)
 			if lastMove == "" then
 				-- comboStep = 0
-				gui.text(60, 50 + 10 * 9, "dins")
+				-- gui.text(60, 50 + 10 * 9, "dins")
+				-- comboStatus = 'standby'
 				comboStatus = 'standby'
-				
 			end
 			
-			
+			-- if comboStatus == 'debug' then
+				d1 = gamestate.P2.state
+				d2 = gamestate.P2.prev.state
+				d3 = gamestate.P2.combo_counter
+				d4 = gamestate.P1.move
+				d5 = ryuCombosArray2[gamestate.P2.combo_counter + 1]
+				d6 = readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1])
+				
+			-- end
+			gui.text(50, 50 + 10 * 9, "gamestate.P2.state"..d1)
+				gui.text(50, 50 + 10 * 10, "gamestate.P2.prev.state"..d2)
+				gui.text(50, 50 + 10 * 11, "gamestate.P2.combo_counter"..d3)
+				gui.text(50, 50 + 10 * 12, "gamestate.P1.move"..d4)
+				gui.text(50, 50 + 10 * 13, "ryuCombosArray2[gamestate.P2.combo_counter + 1]"..d5)
+				gui.text(50, 50 + 10 * 14, "readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1])"..tostring(d6))
 
 			if comboStatus == 'fail' then
-				if readMove(gamestate.P1, ryuCombosArray2[1]) == false then
+				if gamestate.P2.state ~= being_hit and gamestate.P2.prev.state == being_hit then
 					comboStatus = 'waitingForResetTrigger'
 					-- gui.text(60, 50 + 10 * 9, tostring())
 				end
 			end
 
 			if comboStatus == 'waitingForFailTrigger' then
-				if isPressed(gamestate.P1, "LK") then
+				bh1 = gamestate.P2.state == being_hit
+				bh2 = gamestate.P2.prev.state == being_hit
+				if gamestate.P2.state == being_hit and gamestate.P2.prev.state ~= being_hit then
 					showError = true
 					comboStatus = 'fail'
 				end
 			end
 
 			if comboStatus == 'blocked' then
-				if isPressed(gamestate.P1, "LK") == false then
+				if gamestate.P2.state ~= being_hit and gamestate.P2.prev.state == being_hit then
 					comboStatus = 'waitingForFailTrigger'
 				end
 			end
@@ -122,12 +146,17 @@ local function comboTrials()
 			if comboStatus == 'started' then
 				-- if gamestate.P2.combo_counter == 0 then
 					-- comboStatus = 'blocked'
-				
-				if readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1]) then
-					comboStep = gamestate.P2.combo_counter + 1
+					bh1 = gamestate.P2.state == being_hit
+					bh2 = gamestate.P2.prev.state == being_hit
+				-- if (comboStep > 0 and gamestate.P2.combo_counter == 0) then
+				-- 	comboStatus = 'waitingForFailTrigger'
+				-- end
+				if readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1]) and gamestate.P2.combo_counter + 1 >= comboStep then
+					updateComboStep(gamestate.P2.combo_counter + 1)
 				elseif gamestate.P2.combo_counter == 0 then
-					comboStatus = 'blocked'
+					comboStatus = 'waitingForFailTrigger'
 				end
+				
 				
 				-- if readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1]) then
 					-- lua arrays start on 1, not 0
@@ -139,36 +168,40 @@ local function comboTrials()
 
 			
 			if comboStatus == 'standby' then
-				
-				
-				if readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1]) then
+				if gamestate.P2.state ~= being_hit and gamestate.P2.prev.state ~= being_hit and readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1]) then
 					-- lua arrays start on 1, not 0
 					updateComboStep(gamestate.P2.combo_counter + 1)
 					-- comboError = false
 					showError = false
 					-- if showError == false then
 					twoSeconds = 120
+					
 					comboStatus = 'started'
 				end
 			end
 			
 			if comboStatus == 'reset' then
 				
-				comboStep = 0
-				showError = false
-				comboStatus = 'started'
+				-- comboStep = 0
+				-- showError = false
+				-- comboStatus = 'started'
 				
 			end
 			
 			if comboStatus == 'waitingForResetTrigger' then
 				if readMove(gamestate.P1, ryuCombosArray2[1]) then
-					comboStatus = 'reset'
+					-- comboStatus = 'reset'
+					comboStep = 0
+					showError = false
+					updateComboStep(gamestate.P2.combo_counter + 1)
+					comboStatus = 'started'
 				end
 			end
 
-			
+			-- gui.text(60, 50 + 10 * 9, "nen"..tostring(bh1))
+			-- 	gui.text(60, 50 + 10 * 10, "nen2"..tostring(bh2))
 
-			gui.text(60, 50 + 10 * 7, "comboStatus: "..comboStatus)
+			
 			-- if preError == true then
 			-- 	showError = true
 			-- end

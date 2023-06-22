@@ -114,7 +114,7 @@ local function comboTrials()
 					comboData.failTimeout = FAIL_TIMEOUT
 				end
 				-- Restart case. Only after fail status is marked and first combo moved happens
-				if comboData.showError == true and comboData.comboStep > 0 and readMove(gamestate.P1, ryuComboList[comboData.currentCombo][1]) then
+				if comboData.showError and comboData.comboStep > 0 and readMove(gamestate.P1, ryuComboList[comboData.currentCombo][1]) then
 					comboData.showError = false
 					comboData.comboStep = 1
 					-- let's print and return to avoid bleeding in the next condition
@@ -172,7 +172,7 @@ local function comboTrials()
 				comboData.resetTimeout = -1
 				comboData.comboStep = 0
 				-- jump to next combo only after reset, otherwise currentcombo index will fail
-				if comboData.comboComplete == true then
+				if comboData.comboComplete then
 					comboData.currentCombo = comboData.currentCombo + 1
 					comboData.comboComplete = false
 				end

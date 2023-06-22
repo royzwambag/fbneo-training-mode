@@ -21,11 +21,11 @@ local ryuComboList = {
 
 -- state
 local comboData = {
-    comboStep = 0,
-    showError = false,
-    failTimeout = -1, -- nil
-    resetTimeout = -1, -- nil
-    currentCombo = 1,
+	comboStep = 0,
+	showError = false,
+	failTimeout = -1, -- nil
+	resetTimeout = -1, -- nil
+	currentCombo = 1,
 	comboComplete = false,
 }
 
@@ -119,7 +119,7 @@ local function comboTrials()
 					comboData.comboStep = 1
 					-- let's print and return to avoid bleeding in the next condition
 					printTrial()
-    				return
+					return
 				end
 				-- Fail case
 				if gamestate.P2.combo_counter < comboData.comboStep and initComboStep ~= 0 then

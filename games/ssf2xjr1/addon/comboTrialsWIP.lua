@@ -104,13 +104,13 @@ local function comboTrials()
 		if gamestate.P1.character == Ryu then
 			-- combo counter changes on hit so we need the hit change as the moment of reference
 			if gamestate.P2.state == being_hit and gamestate.P2.prev.state ~= being_hit then
-				-- variable to handle the very first init case
+				-- don't fail on first line or restart
 				local initComboStep = comboData.comboStep
 				-- disable reset timeout
 				comboData.resetTimeout = -1
 				-- Start move case. Because we are coming from a non hit state
-				if readMove(gamestate.P1, ryuComboList[comboData.currentCombo][gamestate.P2.combo_counter + 1]) then
-					updateComboStep(gamestate.P2.combo_counter + 1)
+				if readMove(gamestate.P1, ryuComboList[comboData.currentCombo][1]) then
+					updateComboStep(1)
 					comboData.failTimeout = FAIL_TIMEOUT
 				end
 				-- Restart case. Only after fail status is marked and first combo moved happens
@@ -126,7 +126,6 @@ local function comboTrials()
 					comboData.showError = true
 					comboData.resetTimeout = RESET_TIMEOUT
 				end
-				
 			end
 			
 			-- Combo case. As of the first hit
@@ -179,6 +178,13 @@ local function comboTrials()
 			end
 			printTrial()
 		end
+
+		-- debug lines
+		-- gui.text(60, 50 + 10 * 10, "gamestate.P2.state"..gamestate.P2.state)
+		-- gui.text(60, 50 + 10 * 11, "gamestate.P2.prev.state"..gamestate.P2.prev.state)
+		-- gui.text(60, 50 + 10 * 12, "readMove(combo + 1)"..tostring(readMove(gamestate.P1, ryuComboList[1][gamestate.P2.combo_counter + 1])))
+		-- gui.text(60, 50 + 10 * 13, "gamestate.P2.combo_counter"..gamestate.P2.combo_counter)
+		-- gui.text(60, 50 + 10 * 14, "comboData.comboStep"..comboData.comboStep)
 
 		--------------
 		-- Reinitialization

@@ -102,7 +102,7 @@ local function comboTrials()
 		ini = true
 	else
 		if gamestate.P1.character == Ryu then
-			-- combo counter chances on hit so we need the hit change as the moment of reference
+			-- combo counter changes on hit so we need the hit change as the moment of reference
 			if gamestate.P2.state == being_hit and gamestate.P2.prev.state ~= being_hit then
 				-- variable to handle the very first init case
 				local initComboStep = comboData.comboStep

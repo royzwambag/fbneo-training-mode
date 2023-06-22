@@ -2,6 +2,10 @@ local hitboxes_file = "games/ssf2xjr1/addon/resources/hitboxes/"
 local ini = false
 local DEBUG = true
 
+local FAIL_TIMEOUT = 50
+local RESET_TIMEOUT = 60
+
+-- Colors from sf6 combo trial
 local comboMoveStatus = {
 	next = "#c154c1",
 	pending = "#ffffff",
@@ -9,73 +13,79 @@ local comboMoveStatus = {
 	fail = "#000000",
 }
 
-local colorTest = {"white", "red"}
-local comboMoveStatusColors = {
-	next = "#c154c1",
-	pending = "#ffffff",
-	complete = "#fc8eac",
-	fail = "#000000",
+local ryuComboList = {
+	{"Cr LK", "Cr LK", "Cr LK"},
+	{"Hadouken HP"},
+	{"Cr MK", "Hadouken HP"},
 }
 
-local ryuCombosArray = {"J HK_F", "Cr HK", "Hadouken HP"}
-local ryuCombosArray2 = {"Cr LK", "Cr LK", "Cr LK"}
+-- state
+local comboData = {
+    comboStep = 0,
+    showError = false,
+    failTimeout = -1, -- nil
+    resetTimeout = -1, -- nil
+    currentCombo = 1,
+	comboComplete = false,
+}
 
-local bh1 = ''
-local bh2 = ''
-local comboStatus = 'standby'
-local comboRestart = false
-local showErrorReady = false
-local comboBlocked = false
-local comboFail = false
-local comboStep = 0
-local preError = false
-local comboError = false
-local showError = false
-local beforeError = nil
-local twoSeconds = 220
+-- helpers
 local function printTrial()
 	-- title
-	gui.text(60,50,"Combo Trial (1/5):")
+	gui.text(60,50,"Combo Trial ("..comboData.currentCombo.."/"..#ryuComboList.."):")
 	
-	local nextStep = comboStep + 1
+	local nextStep = comboData.comboStep + 1
+
+	-- completion exit
+	if comboData.currentCombo > #ryuComboList then
+		return
+	end
 
 	-- steps printing
-	for i = 1, #ryuCombosArray2 do
-		-- next step
+	for i = 1, #ryuComboList[comboData.currentCombo] do
+		-- next step color
 		if i == nextStep then
-			if showError then
+			if comboData.showError then
 				color = comboMoveStatus.fail
 			else
 				color = comboMoveStatus.next
 			end	
 			gui.text(50, 50 + 10 * i, ">>", color)
-		-- pre and post steps
+		-- pre and post steps color
 		elseif i < nextStep then
 			color = comboMoveStatus.complete
 		else
 			color = comboMoveStatus.pending
 		end
+		
+		-- step print
+		gui.text(60, 50 + 10 * i, ryuComboList[comboData.currentCombo][i], color)
+
 		-- combo complete
-		if comboStep == #ryuCombosArray2 then
+		if comboData.comboStep == #ryuComboList[comboData.currentCombo] then
 			gui.text(60, 50 + 10 * (nextStep), "SUCCESS!", color)
+			comboData.comboComplete = true
 		end
-		gui.text(60, 50 + 10 * i, ryuCombosArray2[i], color)
 	end
-	gui.text(60, 50 + 10 * 7, "comboStatus: "..comboStatus)
 end
 
+-- given that it's a constant frame evaluation we only change steps incrementally, unless reset or restart happens
 local function updateComboStep(newStep)
-	if newStep > comboStep then
-		comboStep = newStep
+	if newStep > comboData.comboStep then
+		comboData.comboStep = newStep
 	end
 end
-local d1 = ''
-local d2 = ''
-local d2 = ''
-local d2 = ''
-local d2 = ''
 
+-- main
 local function comboTrials()
+	-- Mimicking sf6 combo trial. Example: https://www.youtube.com/watch?v=trJYL24eCzE
+
+	-- completion exit
+	if comboData.currentCombo > #ryuComboList then
+		gui.text(50, 50 + 10, "Combo Trial Complete")
+		return
+	end
+
 	-- Initialization
 	if not ini then
 		print(hitboxes_file..readCharacterName(gamestate.P1).."_hitboxes.lua")
@@ -92,212 +102,84 @@ local function comboTrials()
 		ini = true
 	else
 		if gamestate.P1.character == Ryu then
-			gui.text(60, 50 + 10 * 5, "comboStep: "..comboStep)
-	
-			-- init
-			updateCurrMove(gamestate.P1)
-			local lastMove = gamestate.P1.move
-			-- gui.text(60, 50 + 10 * 8, "lastmove: "..lastMove)
-			if lastMove == "" then
-				-- comboStep = 0
-				-- gui.text(60, 50 + 10 * 9, "dins")
-				-- comboStatus = 'standby'
-				comboStatus = 'standby'
-			end
-			
-			-- if comboStatus == 'debug' then
-				d1 = gamestate.P2.state
-				d2 = gamestate.P2.prev.state
-				d3 = gamestate.P2.combo_counter
-				d4 = gamestate.P1.move
-				d5 = ryuCombosArray2[gamestate.P2.combo_counter + 1]
-				d6 = readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1])
-				
-			-- end
-			gui.text(50, 50 + 10 * 9, "gamestate.P2.state"..d1)
-				gui.text(50, 50 + 10 * 10, "gamestate.P2.prev.state"..d2)
-				gui.text(50, 50 + 10 * 11, "gamestate.P2.combo_counter"..d3)
-				gui.text(50, 50 + 10 * 12, "gamestate.P1.move"..d4)
-				gui.text(50, 50 + 10 * 13, "ryuCombosArray2[gamestate.P2.combo_counter + 1]"..d5)
-				gui.text(50, 50 + 10 * 14, "readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1])"..tostring(d6))
-
-			if comboStatus == 'fail' then
-				if gamestate.P2.state ~= being_hit and gamestate.P2.prev.state == being_hit then
-					comboStatus = 'waitingForResetTrigger'
-					-- gui.text(60, 50 + 10 * 9, tostring())
-				end
-			end
-
-			if comboStatus == 'waitingForFailTrigger' then
-				bh1 = gamestate.P2.state == being_hit
-				bh2 = gamestate.P2.prev.state == being_hit
-				if gamestate.P2.state == being_hit and gamestate.P2.prev.state ~= being_hit then
-					showError = true
-					comboStatus = 'fail'
-				end
-			end
-
-			if comboStatus == 'blocked' then
-				if gamestate.P2.state ~= being_hit and gamestate.P2.prev.state == being_hit then
-					comboStatus = 'waitingForFailTrigger'
-				end
-			end
-
-			if comboStatus == 'started' then
-				-- if gamestate.P2.combo_counter == 0 then
-					-- comboStatus = 'blocked'
-					bh1 = gamestate.P2.state == being_hit
-					bh2 = gamestate.P2.prev.state == being_hit
-				-- if (comboStep > 0 and gamestate.P2.combo_counter == 0) then
-				-- 	comboStatus = 'waitingForFailTrigger'
-				-- end
-				if readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1]) and gamestate.P2.combo_counter + 1 >= comboStep then
+			-- combo counter chances on hit so we need the hit change as the moment of reference
+			if gamestate.P2.state == being_hit and gamestate.P2.prev.state ~= being_hit then
+				-- variable to handle the very first init case
+				local initComboStep = comboData.comboStep
+				-- disable reset timeout
+				comboData.resetTimeout = -1
+				-- Start move case. Because we are coming from a non hit state
+				if readMove(gamestate.P1, ryuComboList[comboData.currentCombo][gamestate.P2.combo_counter + 1]) then
 					updateComboStep(gamestate.P2.combo_counter + 1)
-				elseif gamestate.P2.combo_counter == 0 then
-					comboStatus = 'waitingForFailTrigger'
+					comboData.failTimeout = FAIL_TIMEOUT
+				end
+				-- Restart case. Only after fail status is marked and first combo moved happens
+				if comboData.showError == true and comboData.comboStep > 0 and readMove(gamestate.P1, ryuComboList[comboData.currentCombo][1]) then
+					comboData.showError = false
+					comboData.comboStep = 1
+					-- let's print and return to avoid bleeding in the next condition
+					printTrial()
+    				return
+				end
+				-- Fail case
+				if gamestate.P2.combo_counter < comboData.comboStep and initComboStep ~= 0 then
+					comboData.showError = true
+					comboData.resetTimeout = RESET_TIMEOUT
 				end
 				
-				
-				-- if readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1]) then
-					-- lua arrays start on 1, not 0
-					-- updateComboStep(gamestate.P2.combo_counter + 1)
-					
-				-- end
-				
 			end
-
 			
-			if comboStatus == 'standby' then
-				if gamestate.P2.state ~= being_hit and gamestate.P2.prev.state ~= being_hit and readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1]) then
-					-- lua arrays start on 1, not 0
+			-- Combo case. As of the first hit
+			if gamestate.P2.state == being_hit and gamestate.P2.prev.state == being_hit and
+			   -- skip "start move case" dealt in the previous if
+			   comboData.comboStep > 0 and
+			   -- super important. So they first combo step and previous steps that are not
+			   -- following up the combo sequence are not evaluated. Otherwise we would get
+			   -- unnecessary fail cases.
+			   -- This is also because in sf6 the first line will never be a fail
+			   -- only as of the second line.
+			   gamestate.P2.combo_counter + 1 >= comboData.comboStep and
+			   -- blocked until restart case
+			   comboData.showError == false and
+			   -- avoid overflow
+			   gamestate.P2.combo_counter + 1 <= #ryuComboList[comboData.currentCombo] then
+				if readMove(gamestate.P1, ryuComboList[comboData.currentCombo][gamestate.P2.combo_counter + 1]) then
 					updateComboStep(gamestate.P2.combo_counter + 1)
-					-- comboError = false
-					showError = false
-					-- if showError == false then
-					twoSeconds = 120
-					
-					comboStatus = 'started'
-				end
-			end
-			
-			if comboStatus == 'reset' then
-				
-				-- comboStep = 0
-				-- showError = false
-				-- comboStatus = 'started'
-				
-			end
-			
-			if comboStatus == 'waitingForResetTrigger' then
-				if readMove(gamestate.P1, ryuCombosArray2[1]) then
-					-- comboStatus = 'reset'
-					comboStep = 0
-					showError = false
-					updateComboStep(gamestate.P2.combo_counter + 1)
-					comboStatus = 'started'
+					comboData.failTimeout = FAIL_TIMEOUT
+				-- this is the fail case where we perform a combo
+				-- but not with the right moves
+				-- the combo counter increases but not the combostep
+				elseif gamestate.P2.combo_counter == comboData.comboStep then
+					comboData.showError = true
+					comboData.resetTimeout = RESET_TIMEOUT
 				end
 			end
 
-			-- gui.text(60, 50 + 10 * 9, "nen"..tostring(bh1))
-			-- 	gui.text(60, 50 + 10 * 10, "nen2"..tostring(bh2))
+			-- Fail timeout. sf6 style
+			if comboData.failTimeout > 0 then
+				comboData.failTimeout = comboData.failTimeout - 1
+			elseif comboData.failTimeout == 0 then
+				comboData.showError = true
+				comboData.resetTimeout = RESET_TIMEOUT
+				comboData.failTimeout = -1
+			end
 
-			
-			-- if preError == true then
-			-- 	showError = true
-			-- end
-
-			-- if isPressed(gamestate.P1, "LK") == false then
-			-- 	preError = true
-			-- else
-			-- 	preError = false
-			-- end
-
-			
-
-			-- if gamestate.P2.combo_counter ~= 0 then
-			-- 	showError = false
-			-- end
-			
-			-- combo progression
-			-- which also restarts the timeout
-			
-
-			
-			-- gui.text(60, 50 + 10 * 5, "comboFail: "..tostring(comboFail))
-			-- if comboFail and isPressed(gamestate.P1, "LK") then
-			-- 	comboBlocked = true
-			-- end
-
-			-- if comboBlocked and isPressed(gamestate.P1, "LK") == false then
-			-- 	showErrorReady = true
-			-- end
-
-			-- if showErrorReady and isPressed(gamestate.P1, "LK") then
-			-- 	showError = true
-			-- end
-
-			-- if showError and isPressed(gamestate.P1, "LK") == false then
-			-- 	comboRestart = true
-			-- end
-
-			-- if comboRestart and isPressed(gamestate.P1, "LK") then
-			-- 	comboFail = false
-			-- end
-
-			-- if isPressed(gamestate.P1, "LK") and (comboStep == 0 or showError) then
-			-- 	-- if gamestate.P2.combo_counter > comboStep then
-			-- 	if gamestate.P2.combo_counter == comboStep then
-			-- 		if readMove(gamestate.P1, ryuCombosArray2[gamestate.P2.combo_counter + 1]) then
-			-- 			-- lua arrays start on 1, not 0
-			-- 			comboStep = gamestate.P2.combo_counter + 1
-			-- 			-- comboError = false
-			-- 			showError = false
-			-- 			-- if showError == false then
-			-- 			twoSeconds = 120
-			-- 		end
-			-- 	end
-			-- elseif isPressed(gamestate.P1, "LK") and comboStep > gamestate.P2.combo_counter then
-			-- 	-- twoSeconds = twoSeconds - 1
-			-- 	showError = true
-			-- end
-			
-			-- reset cases
-			
-			-- 2. after 2 seconds of non combo moves
-			-- lastMove ~= ryuCombosArray2[1] and gamestate.P2.combo_counter == 0
-			-- if readMove(gamestate.P1, ryuCombosArray2[1]) and gamestate.P2.combo_counter == 0 or twoSeconds == 0 then
-				-- comboStep = 0
-				-- showError = false
-				-- comboError = false
-			-- end
-
-			
-			-- if isPressed(gamestate.P1, "LK") == false and comboStep ~= 0 and gamestate.P2.combo_counter == 0 then
-			-- 	-- beforeErrorMove = readMove(gamestate.P1, lastMove)
-			-- 	-- beforeErrorMove = lastMove
-			-- 	comboError = true
-			-- 	-- showError = false
-			-- else
-			-- 	comboError = false
-				
-			-- end
-
-			-- print trial with corresponding comboStep (global var)
+			-- Reset timeout. sf6 style
+			if comboData.resetTimeout > 0 then
+				comboData.resetTimeout = comboData.resetTimeout - 1
+			elseif comboData.resetTimeout == 0 then
+				comboData.showError = false
+				comboData.resetTimeout = -1
+				comboData.comboStep = 0
+				-- jump to next combo only after reset, otherwise currentcombo index will fail
+				if comboData.comboComplete == true then
+					comboData.currentCombo = comboData.currentCombo + 1
+					comboData.comboComplete = false
+				end
+			end
 			printTrial()
-			
-			
-
-			
-
-			-- updateCurrMove(gamestate.P1)
-			-- local firstMoveCached = ryuCombosArray2[gamestate.P2.combo_counter + 1] == gamestate.P1.move
-			-- if firstMoveCached then
-				-- printTrial(gamestate.P2.combo_counter + 1)
-			-- end
-			-- if gamestate.P2.combo_counter == 0 and readMove(gamestate.P1, ryuCombosArray2[1]) then
-				-- comboStep = 0
-			-- end
 		end
+
 		--------------
 		-- Reinitialization
 		if characterChanged(gamestate.P1) then

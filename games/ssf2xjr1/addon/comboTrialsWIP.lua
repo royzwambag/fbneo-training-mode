@@ -133,7 +133,7 @@ local function comboTrials()
 			if gamestate.P2.state == being_hit and gamestate.P2.prev.state == being_hit and
 			   -- skip "start move case" dealt in the previous if
 			   comboData.comboStep > 0 and
-			   -- super important. So they first combo step and previous steps that are not
+			   -- super important. So the first combo step and previous steps that are not
 			   -- following up the combo sequence are not evaluated. Otherwise we would get
 			   -- unnecessary fail cases.
 			   -- This is also because in sf6 the first line will never be a fail

@@ -96,7 +96,7 @@ local function getTiming(character)
 	elseif character == Ryu or character == Cammy then -- safe from all DP
 		reversal_name = "DP (All versions)."
 		return 5
-	elseif character == DJ then -- safe from all Upkicks
+	elseif character == Deejay then -- safe from all Upkicks
 		reversal_name = "Upkick (All versions)."
 		return 5
 	elseif character == Chun then
@@ -220,7 +220,7 @@ local function blankaOS()
 					update_msg_blanka_os(2) -- Did not try to grab
 					return
 				end
-				if throwAttemptHP(gamestate.P1) then
+				if throwAttemptHP() then
 					if not blankaTickThrowAttempt() then
 						state = 0
 						update_msg_blanka_os(1) -- Did not tick

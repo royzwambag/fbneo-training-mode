@@ -1037,8 +1037,8 @@ local function display_taplevel(player_side)
 	local text
 	local punch = 0
 	local kick = 0
-	local p_level = 0
-	local k_level = 0
+	local p_level = ""
+	local k_level = ""
 	if player_side == 1 then
 		punch = rw(0xFF8504)
 		kick = rw(0xFF8506)
@@ -1065,7 +1065,7 @@ local function display_taplevel(player_side)
 	if kick >= 1441 then k_level = "6" end
 	if kick >= 1921 then k_level = "7" end
 	if kick >= 2401 then k_level = "Final" end
-	text="P("..tostring(p_level)..") / K("..tostring(k_level)..")"
+	text="P("..p_level..") / K("..k_level..")"
 	return text
 end
 
@@ -1704,7 +1704,7 @@ local p2_tf = gamestate.P2.throw_flag
 					p1_grab_drawn = true
 					draw_grab(0,p1_c,p2_c,p1_gc)
 				end
-			elseif p1_c == Balrog then
+			elseif p1_c == Boxer then
 				if p1_gf == 0x06 or p1_gf == 0x05 then
 					p1_grab_drawn = true
 					draw_grab(0,p1_c,p2_c,p1_gc)
@@ -3061,7 +3061,7 @@ local calculation_end = false
 local frame_advantage = 0
 local frame_disadvantage = 0
 local frame_addition = 0
-local frame_advantage_result = 0
+local frame_advantage_result = ""
 local frame_advantage_msg_fcount = 0
 -- Read the kind of move performed
 local projectile_hit = false

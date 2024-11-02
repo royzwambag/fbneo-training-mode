@@ -1604,7 +1604,7 @@ function getJumpVersion(_player_obj) -- Returns neutral, back or forward
 			-- else
 				-- return "forward"
 			-- end
-		-- elseif jump_x_coeff == 0x03 or ((character == DJ or character == Fei or character == Guile or character == Ken or character == Ryu) and jump_x_coeff == 0x04) then -- Shoto, Guile, Fei and DJ 0x4 when right
+		-- elseif jump_x_coeff == 0x03 or ((character == Deejay or character == Fei or character == Guile or character == Ken or character == Ryu) and jump_x_coeff == 0x04) then -- Shoto, Guile, Fei and Deejay 0x4 when right
 			-- if left then
 				-- return "forward"
 			-- else
@@ -1629,11 +1629,11 @@ function getJumpDuration(_player_obj, _jump_version) -- Returns the total of unc
 			duration = 47
 		elseif character == Zangief then
 			duration = 48
-		elseif character == Boxer or (character == DJ and not old) or character == Fei or (old and (character == Ken or character == Ryu)) then
+		elseif character == Boxer or (character == Deejay and not old) or character == Fei or (old and (character == Ken or character == Ryu)) then
 			duration = 49
 		elseif character == Chun or (not old and (character == Ken or character == Ryu)) then
 			duration = 50
-		elseif character == Honda or (character == DJ and old) then
+		elseif character == Honda or (character == Deejay and old) then
 			duration = 51
 		elseif character == Cammy or character == Dictator then
 			duration = 52
@@ -1653,11 +1653,11 @@ function getJumpDuration(_player_obj, _jump_version) -- Returns the total of unc
 			duration = 48
 		elseif character == Ken or character == Ryu or character == Sagat or character == Zangief then
 			duration = 49
-		elseif character == Boxer or (character == DJ and not old) or character == Fei then
+		elseif character == Boxer or (character == Deejay and not old) or character == Fei then
 			duration = 50
 		elseif character == Chun or character == Honda then
 			duration = 51
-		elseif character == Cammy or (character == DJ and old) then
+		elseif character == Cammy or (character == Deejay and old) then
 			duration = 52
 		elseif character == Dictator or character == Guile then
 			duration = 53
@@ -1669,9 +1669,9 @@ function getJumpDuration(_player_obj, _jump_version) -- Returns the total of unc
 			duration = 41
 		elseif character == Blanka or (character == Sagat and old) then
 			duration = 44
-		elseif character == Fei or character == Hawk or character == Zangief or (character == DJ and old) or (character == Sagat and not old) then
+		elseif character == Fei or character == Hawk or character == Zangief or (character == Deejay and old) or (character == Sagat and not old) then
 			duration = 46
-		elseif character == Boxer or (character == DJ and not old) or (old and (character == Ken or character == Ryu)) then
+		elseif character == Boxer or (character == Deejay and not old) or (old and (character == Ken or character == Ryu)) then
 			duration = 48
 		elseif not old and (character == Ken or character == Ryu) then
 			duration = 49
@@ -1697,7 +1697,7 @@ function getReversalStartup(_player_obj)
 		return 2
 	elseif character == Sagat then
 		return 3
-	elseif character == Cammy or character == DJ or character == Hawk or character == Ryu then
+	elseif character == Cammy or character == Deejay or character == Hawk or character == Ryu then
 		return 4
 	elseif character == Guile or (character == Claw and not old) then
 		return 5
@@ -1803,7 +1803,7 @@ end
 function modifyInputSet(_player_obj, ...)
 	inputs.properties.enableinputset = true 
 	local dir, button1, button2, button3, button4, button5, button6 = ...
-	local dir1, dir2 = nil
+	local dir1, dir2 = nil, nil
 	local buttons = {button1, button2, button3, button4, button5, button6}
 	local direction_set = {{"Down", "Left"}, {"Down"}, {"Down", "Right"}, {"Left"}, {}, {"Right"}, {"Up", "Left"}, {"Up"}, {"Up", "Right"}} -- numpad
 	local button_set = {{"Weak Punch","LP"}, {"Medium Punch","MP"}, {"Strong Punch","HP"}, {"Weak Kick","LK"}, {"Medium Kick","MK"}, {"Strong Kick","HK"}}

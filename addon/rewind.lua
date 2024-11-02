@@ -47,7 +47,7 @@ local inputParse = function()
 	if DEBUG then
 		gui.text(1,10,"Current frame: ".. fc)
 		gui.text(1,20,"Distance from replay: "..relfc-fc)
-		gui.text(1,30,"Savestate slot \("..math.floor((fc-earliestfc)/SAVESTATE_INTERVAL).."/"..math.floor((latestfc-earliestfc)/SAVESTATE_INTERVAL).."\)")
+		gui.text(1,30,"Savestate slot ("..math.floor((fc-earliestfc)/SAVESTATE_INTERVAL).."/"..math.floor((latestfc-earliestfc)/SAVESTATE_INTERVAL)..")")
 	end
 		
 	if (kb[REWIND_KEY]) then 

@@ -250,15 +250,15 @@ local function triggerDash(_dash_id)
 		if not distance_set and not dashing then 
 			if (distance_selector == 0 and not gamestate.P2.is_cornered) or (distance_selector ~= 0 and distance < dash_distance) then
 				if playerOneFacingLeft() then 
-					modifyInputSet(gamestate.P2,4)
+					modifyInputSet(2,4)
 				else
-					modifyInputSet(gamestate.P2,6)
+					modifyInputSet(2,6)
 				end
 			elseif (distance_selector ~= 0 and distance > dash_distance) then 
 				if playerOneFacingLeft() then 
-					modifyInputSet(gamestate.P2,6)
+					modifyInputSet(2,6)
 				else
-					modifyInputSet(gamestate.P2,4)
+					modifyInputSet(2,4)
 				end
 			end
 			return 
@@ -271,13 +271,13 @@ local function triggerDash(_dash_id)
 
 		if (rb(0xFF84CE+p2) < 0x04 or rb(0xFF84D6+p2) < 0x04 or rb(0xFF852B+p2) < 0x04 or rb(0xFF8524+p2) < 0x04) or (dashes_frequence_selector == 1 and dashes_delay < 0) then
 			if gamestate.P2.flip_input then
-				modifyInputSet(gamestate.P2,1)
+				modifyInputSet(2,1)
 			else
-				modifyInputSet(gamestate.P2,3)
+				modifyInputSet(2,3)
 			end
 			dashing = true
 		elseif (rb(0xFF84CE+p2) == 0x04 and rb(0xFF84D6+p2) == 0x04 and rb(0xFF852B+p2) == 0x04 and rb(0xFF8524+p2) == 0x04) then
-			modifyInputSet(gamestate.P2,5)
+			modifyInputSet(2,5)
 			dashing = true
 		elseif (rb(0xFF84CE+p2) == 0x06 or rb(0xFF84D6+p2) == 0x06 or rb(0xFF852B+p2) == 0x06 or rb(0xFF8524+p2) == 0x06) then
 			ready_to_fire = true

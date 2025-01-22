@@ -227,6 +227,7 @@ local process_box_type = {
 	end,
 }
 
+
 local function define_box(obj, entry)
 	local box = {
 		type = game.box_list[entry].type,
@@ -251,6 +252,18 @@ local function define_box(obj, entry)
 	return box
 end
 
+local function returnBoxType(obj, entry)
+	local box = {
+		type = game.box_list[entry].type,
+		id = memory.readbyte(obj.animation_ptr + game.box_list[entry].id_ptr),
+	}
+
+	if box.id == 0 or process_box_type[box.type](obj, box) == false then
+		return nil
+	end
+	return box
+end
+
 local function define_throw_box(obj, entry)
 	local box = {
 		type = game.throw_box_list[entry].type,
@@ -264,32 +277,29 @@ local function define_throw_box(obj, entry)
 	return box
 end
 
-local function update_game_object(obj) -- Modified by Asunaro to also stock the boxes in the main game objects (gamestate.P1/P2)
+
+local function update_game_object(obj)
 	obj.facing_dir    = memory.readbyte(obj.base + 0x12)
 	obj.pos_x         = get_x(memory.readwordsigned(obj.base + 0x06))
 	obj.pos_y         = get_y(memory.readwordsigned(obj.base + 0x0A))
 	obj.animation_ptr = memory.readdword(obj.base + 0x1A)
 	obj.hitbox_ptr    = memory.readdword(obj.base + 0x34)
 
-	local _player_obj = {}
-	if obj.base == addresses.players[1].base or obj.base == addresses.projectiles[1].base then
-		_player_obj = gamestate.P1
-	elseif obj.base == addresses.players[2].base or obj.base == addresses.projectiles[2].base then
-		_player_obj = gamestate.P2
-	end
-
 	for entry in ipairs(game.box_list) do
-		local box = define_box(obj, entry)
-		if box ~= nil then
-			table.insert(obj, box)
-			if _player_obj.boxes ~= nil then
-				table.insert(_player_obj.boxes, box)
-			end
-		end
+		table.insert(obj, define_box(obj, entry))
 	end
 end
----------------------------------------------------------------------------
----------------------------------------------------------------------------
+
+function updateGameObjectBoxes(_player_obj)
+	_player_obj.animation_ptr = memory.readdword(_player_obj.base + 0x1A)
+	_player_obj.boxes = {}
+	for i = 1, #_player_obj.boxes do
+		player_obj.boxes[i] = nil
+	end
+	for entry in ipairs(game.box_list) do
+		table.insert(_player_obj.boxes, returnBoxType(_player_obj, entry))
+	end
+end
 
 local function read_projectiles()
 	local current_projectiles = {}
@@ -314,17 +324,11 @@ local function read_projectiles()
 	return current_projectiles
 end
 
+
 local function update_sf2_hitboxes()
 	if not game then
 		return
 	end
-	for k in pairs(gamestate.P1.boxes) do
-		gamestate.P1.boxes[k] = nil
-	end
-	for k in pairs(gamestate.P2.boxes) do
-		gamestate.P2.boxes[k] = nil
-	end
-
 	effective_delay = adjust_delay(game.address.stage)
 	update_globals()
 
@@ -350,6 +354,7 @@ local function update_sf2_hitboxes()
 				table.insert(prev_frame, define_throw_box(prev_frame, entry))
 			end
 		end
+
 	end
 	frame_buffer[effective_delay+1][projectiles] = read_projectiles()
 end
@@ -379,16 +384,6 @@ local function draw_axis(obj)
 	gui.drawline(obj.pos_x-AXIS_SIZE, obj.pos_y, obj.pos_x+AXIS_SIZE, obj.pos_y, AXIS_COLOR)
 end
 
-local draw_p1 = true
-local draw_p2 = true
-
-function drawHitboxes(_player_obj, _bool)
-	if _player_obj.id == 1 then
-		draw_p1 = _bool
-	elseif _player_obj.id == 2 then
-		draw_p2 = _bool
-	end
-end
 
 local function render_sf2_hitboxes()
 	if not game or not frame_buffer[1].status or not draw_hitboxes then
@@ -408,20 +403,16 @@ local function render_sf2_hitboxes()
 		end
 
 		for p = 1, NUMBER_OF_PLAYERS do
-			if (p == 1 and draw_p1) or (p == 2 and draw_p2) then
-				local obj = frame_buffer[1][player][p]
-				if obj and obj[entry] then
-					draw_hitbox(obj, entry)
-				end
+			local obj = frame_buffer[1][player][p]
+			if obj and obj[entry] then
+				draw_hitbox(obj, entry)
 			end
 		end
 	end
 
 	if DRAW_AXIS then
 		for p = 1, NUMBER_OF_PLAYERS do
-			if (p == 1 and draw_p1) or (p == 2 and draw_p2) then
-				draw_axis(frame_buffer[1][player][p])
-			end
+			draw_axis(frame_buffer[1][player][p])
 		end
 		for i in ipairs(frame_buffer[1][projectiles]) do
 			draw_axis(frame_buffer[1][projectiles][i])

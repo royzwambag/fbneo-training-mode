@@ -800,7 +800,7 @@ character_specific.dictator.specials = {
     input_variations = {{"LP"}, {"MP"}, {"HP"}},
   },
   {
-    name = "Knee Press Nightmare",
+    name = "Knee Press Knightmare",
     memory_map = {
       {0xC5, 0x0A}
     },
@@ -1521,197 +1521,6 @@ function determineThrowInput(_throw)
 	end 
 end
 
-function getJumpVersion(_player_obj) -- Returns neutral, back or forward
-	local left = isCharacterLeft(_player_obj)
-	local coeff = rb(0xFF845F)
-	
-	if left then
-		if coeff == 0x01 then
-			return "forward"
-		elseif coeff == 0x00 then
-			return "backward"
-		end
-	else
-		if coeff == 0x01 then
-			return "backward"
-		elseif coeff == 0x00 then
-			return "forward"
-		end
-	end
-	-- local DEBUG = false
-	
-	-- local character = _player_obj.character
-	-- local left = isCharacterLeft(_player_obj)
-	-- local jump_x_coeff = 0
-	-- if _player_obj.id == 1 then
-		-- jump_x_coeff = rb(0xFF848A)
-	-- elseif _player_obj.id == 2 then
-		-- jump_x_coeff = rb(0xFF888A)
-	-- end
-	
-	-- if DEBUG then
-		-- print("0x"..string.format("%x",jump_x_coeff))
-	-- end
-	
-	-- if jump_x_coeff == 0x00 then
-		-- return "neutral"
-	-- elseif character == Dhalsim or character == Hawk or character == Sagat or character == Zangief then 
-		-- if jump_x_coeff == 0xFD then
-			-- if left then
-				-- return "back"
-			-- else
-				-- return "forward"
-			-- end
-		-- elseif jump_x_coeff == 0x02 or (character == Hawk and jump_x_coeff == 0x03) then -- Hawk 0x3 when right
-			-- if left then
-				-- return "forward"
-			-- else
-				-- return "back"
-			-- end
-		-- end
-	-- elseif character == Chun or character == Dictator then
-		-- if jump_x_coeff == 0xFB then
-			-- if left then
-				-- return "back"
-			-- else
-				-- return "forward"
-			-- end
-		-- elseif jump_x_coeff == 0x04 or (character == Dictator and jump_x_coeff == 0x05) then -- Dicta 0x05 when right
-			-- if left then
-				-- return "forward"
-			-- else
-				-- return "back"
-			-- end
-		-- end
-	-- elseif character == Claw then
-		-- if jump_x_coeff == 0xFA or jump_x_coeff == 0xFB then -- Claw 0xFB when right
-			-- if left then
-				-- return "back"
-			-- else
-				-- return "forward"
-			-- end
-		-- elseif jump_x_coeff == 0x05 then
-			-- if left then
-				-- return "forward"
-			-- else
-				-- return "back"
-			-- end
-		-- end
-	-- else
-		-- if jump_x_coeff == 0xFC or (character == Boxer and jump_x_coeff == 0xFD) then -- Boxer 0xFD when right
-			-- if left then
-				-- return "back"
-			-- else
-				-- return "forward"
-			-- end
-		-- elseif jump_x_coeff == 0x03 or ((character == Deejay or character == Fei or character == Guile or character == Ken or character == Ryu) and jump_x_coeff == 0x04) then -- Shoto, Guile, Fei and Deejay 0x4 when right
-			-- if left then
-				-- return "forward"
-			-- else
-				-- return "back"
-			-- end
-		-- end
-	-- end
-end
-
-function getJumpDuration(_player_obj, _jump_version) -- Returns the total of uncancellable jump frames
-	--
-	local character = _player_obj.character
-	local old = _player_obj.is_old
-	local duration = 0
-	--
-	if _jump_version == "neutral" then
-		if character == Claw then
-			duration = 42
-		elseif character == Blanka or (character == Sagat and old) then
-			duration = 45
-		elseif character == Hawk or (character == Sagat and not old) then
-			duration = 47
-		elseif character == Zangief then
-			duration = 48
-		elseif character == Boxer or (character == Deejay and not old) or character == Fei or (old and (character == Ken or character == Ryu)) then
-			duration = 49
-		elseif character == Chun or (not old and (character == Ken or character == Ryu)) then
-			duration = 50
-		elseif character == Honda or (character == Deejay and old) then
-			duration = 51
-		elseif character == Cammy or character == Dictator then
-			duration = 52
-		elseif character == Guile then
-			duration = 53
-		elseif character == Dhalsim then
-			duration = 67
-		end
-	elseif _jump_version == "back" then
-		if character == Claw then
-			duration = 42
-		elseif character == Blanka or character == Hawk then
-			duration = 46
-		elseif (character == Sagat and old) then
-			duration = 47
-		elseif old and (character == Ken or character == Ryu) then
-			duration = 48
-		elseif character == Ken or character == Ryu or character == Sagat or character == Zangief then
-			duration = 49
-		elseif character == Boxer or (character == Deejay and not old) or character == Fei then
-			duration = 50
-		elseif character == Chun or character == Honda then
-			duration = 51
-		elseif character == Cammy or (character == Deejay and old) then
-			duration = 52
-		elseif character == Dictator or character == Guile then
-			duration = 53
-		elseif character == Dhalsim then
-			duration = 68
-		end
-	elseif _jump_version == "forward" then
-		if character == Claw then
-			duration = 41
-		elseif character == Blanka or (character == Sagat and old) then
-			duration = 44
-		elseif character == Fei or character == Hawk or character == Zangief or (character == Deejay and old) or (character == Sagat and not old) then
-			duration = 46
-		elseif character == Boxer or (character == Deejay and not old) or (old and (character == Ken or character == Ryu)) then
-			duration = 48
-		elseif not old and (character == Ken or character == Ryu) then
-			duration = 49
-		elseif character == Cammy or character == Chun or character == Honda then
-			duration = 50
-		elseif character == Dictator then
-			duration = 51
-		elseif character == Guile then
-			duration = 52
-		end
-	end
-
-	return duration
-end
-
-function getReversalStartup(_player_obj)
-	--
-	local character = _player_obj.character
-	local old = _player_obj.is_old
-	local has_super = (_player_obj.special_meter == 48)
-	--
-	if character == Chun and not old then
-		return 2
-	elseif character == Sagat then
-		return 3
-	elseif character == Cammy or character == Deejay or character == Hawk or character == Ryu then
-		return 4
-	elseif character == Guile or (character == Claw and not old) then
-		return 5
-	elseif character == Fei or character == Honda or (character == Boxer and has_super) then
-		return 6
-	elseif character == Dictator and has_super then
-		return 9
-	elseif character == Boxer and not has_super then
-		return 11
-	elseif character == Chun and old then
-		return 17
-	end
-end
-
 function updateForOldChar(_player_obj)
 	local character = _player_obj.character
 	if _player_obj.is_old then
@@ -1800,51 +1609,63 @@ function clearInputSet(player)
 	setInputs()
 end 
 
-function modifyInputSet(_player_obj, ...)
+function modifyInputSet(player, ...)
 	inputs.properties.enableinputset = true 
-	local dir, button1, button2, button3, button4, button5, button6 = ...
-	local dir1, dir2 = nil, nil
-	local buttons = {button1, button2, button3, button4, button5, button6}
-	local direction_set = {{"Down", "Left"}, {"Down"}, {"Down", "Right"}, {"Left"}, {}, {"Right"}, {"Up", "Left"}, {"Up"}, {"Up", "Right"}} -- numpad
-	local button_set = {{"Weak Punch","LP"}, {"Medium Punch","MP"}, {"Strong Punch","HP"}, {"Weak Kick","LK"}, {"Medium Kick","MK"}, {"Strong Kick","HK"}}
+	local dir1, dir2, button1, button2, button3, button4, button5, button6 = ...
+	if type(dir1)=="number" then
+		local a = {{"Down", "Left"}, {"Down"}, {"Down", "Right"}, {"Left"}, {}, {"Right"}, {"Up", "Left"}, {"Up"}, {"Up", "Right"}} -- numpad
+		dir2 = a[dir1][2]
+		dir1 = a[dir1][1]
+	end
+	local a = {{"Weak Punch"}, {"Medium Punch"}, {"Strong Punch"}, {"Weak Kick"}, {"Medium Kick"}, {"Strong Kick"}}
+	if type(button1) =="number" then
+		button1 = a[button1][1]
+	end
+	if type(button2) =="number" then
+		button2 = a[button2][1]
+	end
+	if type(button3) =="number" then
+		button3 = a[button3][1]
+	end
+	if type(button4) =="number" then
+		button4 = a[button4][1]
+	end
+	if type(button5) =="number" then
+		button5 = a[button5][1]
+	end
+	if type(button6) =="number" then
+		button6 = a[button6][1]
+	end
 	
-	if type(dir) == "number" then
-		if direction_set[dir][2] ~= nil then
-			dir2 = direction_set[dir][2]
-		end
-		dir1 = direction_set[dir][1]
-	elseif type(dir) == "table" then
-		dir1 = dir[1]
-		if dir[2] then dir2 = dir[2] end
+	
+	if player == 1 then 
+		if dir1 then inputs.setinputs["P1 "..dir1] = true end
+		if dir2 then inputs.setinputs["P1 "..dir2] = true end
+		if button1 then inputs.setinputs["P1 "..button1] = true end
+		if button2 then inputs.setinputs["P1 "..button2] = true end
+		if button3 then inputs.setinputs["P1 "..button3] = true end
+		if button4 then inputs.setinputs["P1 "..button4] = true end
+		if button5 then inputs.setinputs["P1 "..button5] = true end
+		if button6 then inputs.setinputs["P1 "..button6] = true end
 	end
 
-	for i = 1, #buttons do
-		if type(buttons[i]) == "number" then
-			buttons[i] = button_set[buttons[i]][1]
-		elseif type(buttons[i]) == "string" then
-			for j = 1, #button_set do
-				if buttons[i] == button_set[j][2] then
-					buttons[i] = button_set[j][1]
-				end
-			end
-		end
-	end
-
-	if dir1 then inputs.setinputs[_player_obj.prefix.." "..dir1] = true end
-	if dir2 then inputs.setinputs[_player_obj.prefix.." "..dir2] = true end
-	for i = 1, #buttons do
-		if buttons[i] then
-			inputs.setinputs[_player_obj.prefix.." "..buttons[i]] = true
-		end
+	if player == 2 then
+		if dir1 then inputs.setinputs["P2 "..dir1] = true end
+		if dir2 then inputs.setinputs["P2 "..dir2] = true end
+		if button1 then inputs.setinputs["P2 "..button1] = true end
+		if button2 then inputs.setinputs["P2 "..button2] = true end
+		if button3 then inputs.setinputs["P2 "..button3] = true end
+		if button4 then inputs.setinputs["P2 "..button4] = true end
+		if button5 then inputs.setinputs["P2 "..button5] = true end
+		if button6 then inputs.setinputs["P2 "..button6] = true end
 	end
 	
 	setInputs()
 end
 
 function do_special_move(_player_obj, _special, _variation, easy_special_status)
-	local dir1 = nil -- numpad neutral
-	local dir2 = nil
-	local dir = {}
+	local dir1 = 5 -- numpad neutral
+	local dir2 = 5
 	local button1 = ""
 	local button2 = ""
 	local button3 = ""
@@ -1867,7 +1688,6 @@ function do_special_move(_player_obj, _special, _variation, easy_special_status)
 				dir2 = sequence_input_to_key(_stick, _player_obj.flip_input)
 			end
 		end
-		dir = {dir1, dir2}
 		for i, _button in pairs(_special.input_variations[_variation]) do
 			if i == 1 then
 				button1 = sequence_input_to_key(_button, _player_obj.flip_input)
@@ -1888,5 +1708,5 @@ function do_special_move(_player_obj, _special, _variation, easy_special_status)
 			end
 		end
 	end
-	modifyInputSet(_player_obj, dir, button1, button2, button3)
+	modifyInputSet(_player_obj.id, dir1, dir2, button1, button2, button3)
 end

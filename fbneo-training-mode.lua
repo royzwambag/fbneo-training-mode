@@ -29,6 +29,7 @@ if REPLAY then
 	-- we don't want to write memory when watching a replay
 	wb = function() end
 	ww = function() end
+	wdw = function() end
 	-- this breaks throw hitboxes on some games
 	-- memory.writebyte = function() end
 	-- memory.writeword = function() end
@@ -117,7 +118,7 @@ local games = {
 	sf2ce = {"sf2ce", "sf2hf", "sf2rb", hitboxes = "sf2-hitboxes", iconfile = "icons-capcom-32.png"},
 	sfa = {"sfa", hitboxes = "cps2-hitboxes", iconfile = "icons-capcom-32.png"},
 	sfa2 = {"sfa2", "sfa2u", hitboxes = "cps2-hitboxes", iconfile = "icons-capcom-32.png"},
-	sfa3 = {"sfa3", hitboxes = "cps2-hitboxes", iconfile ="icons-capcom-32letter.png"},
+	sfa3 = {"sfa3", hitboxes = "cps2-hitboxes", iconfile = "icons-capcom-32.png"},
 	sfiii = {"sfiii", hitboxes = "cps3-hitboxes", iconfile = "icons-capcom-32.png"},
 	sfiii2 = {"sfiii2", hitboxes = "cps3-hitboxes", iconfile = "icons-capcom-32.png"},
 	sfiii3 = {"sfiii3", "sfiii3nr1", hitboxes = "cps3-hitboxes", iconfile = "icons-capcom-32.png"},
@@ -1271,7 +1272,7 @@ local readGUIInputs = function()
 	
 	--kb
 	guiinputs.KB.previousinputs = nil
-	guiinputs.KB.previousinputs = copytable(guiinputs.KB)
+	guiinputs.KB.previousinputs = copytable(guiinputs.KB.inputs)
 	guiinputs.KB.inputs = {}
 	for i,v in pairs(input.get()) do -- check every button
 		if i~="xmouse" and i~="ymouse" then -- mouse not implemented correctly yet
@@ -1337,7 +1338,7 @@ local combinePlayerInputs = function(P1, P2, other)
 	return t
 end
 
-toggleSwapInputs = function(bool, vargs)
+local toggleSwapInputs = function(bool, vargs)
 	if bool==nil then inputs.properties.enableinputswap = not inputs.properties.enableinputswap
 	else inputs.properties.enableinputswap = bool end
 	if vargs then vargs.swapinputs = false end
@@ -1728,10 +1729,9 @@ local playBack = function()
 
 	if recording.skiptostart and recordslot.start then start = recordslot.start end
 	if recording.skiptofinish and recordslot.finish then finish = recordslot.finish end
-
-	gui.text(1,1,"Slot "..recording.playbackslot.." ("..fc-recordslot.framestart.."/"..#recordslot..")")
 	
 	if recording.starttime > recording.startcounter then -- delay until replay starts
+		gui.text(1,1,"Slot "..recording.playbackslot.." ("..fc-recordslot.framestart.."/"..#recordslot..")")
 		recording.startcounter = recording.startcounter+1
 		recordslot.framestart = recordslot.framestart+1
 		return
@@ -1740,17 +1740,18 @@ local playBack = function()
 	if recording.maxstarttime>0 then gui.text(72,1,"Delay: "..recording.starttime) end -- show delay
 
 	if fc - recordslot.framestart + start > finish then
-		recordslot.framestart = nil
 		if not recording.loop then -- finished replaying, reset everything
+			recordslot.framestart = nil
 			recording.playback = false
 			toggleSwapInputs(false)
 			recording.playbackslot = nil
+			return
 		else -- loop
-			recordslot.framestart = nil
-			togglePlayBack(true)
+			recordslot.framestart = fc-1
 		end
-		return
 	end
+
+	gui.text(1,1,"Slot "..recording.playbackslot.." ("..fc-recordslot.framestart.."/"..#recordslot..")")
 
 	Unserialise(recordslot[fc - recordslot.framestart + start], recordslot._stable, recordslot.constants)
 	local raw = recordslot[fc - recordslot.framestart + start].raw
@@ -2705,6 +2706,7 @@ registers = {
 	registerbefore = {},
 	guiregister = {},
 	registerafter = {},
+	emuexit = {},
 }
 
 local drawcomboHUD = function()
@@ -3428,6 +3430,13 @@ setRegisters = function() -- pre-calc stuff
 
 	usage()
 	if gamemsg then print() gamemsg() print() end
+
+	emu.registerexit(function()
+		saveConfig()
+		for _,v in ipairs(registers.emuexit) do
+			v()
+		end
+	end)
 end
 
 local saveprocedure = function()
@@ -3439,13 +3448,8 @@ local loadprocedure = function()
 	savestatePlayBack()
 end
 
-local exitprocedure = function()
-	saveConfig()
-end
-
 savestate.registersave(saveprocedure)
 savestate.registerload(loadprocedure)
-emu.registerexit(exitprocedure)
 
 setRegisters()
 

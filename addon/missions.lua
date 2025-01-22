@@ -33,7 +33,7 @@
 ------------------------------------------
 local DEBUG = false
 
-if REPLAY then print "For replay takeover, press Alt+5 to record a mission for P1 and Alt+6 for P2" end
+if REPLAY then print "For replay takeover, press Alt+5 to record a mission" end
 
 function back() -- Should be modified since "back" could be mapped to another button
 	if guiinputs.P1["button6"] and not guiinputs.P1.previousinputs["button6"] then
@@ -328,7 +328,7 @@ local missions_hub = {
 		y = 1,
 	},
 	infos = {
-		text = "In-game press Alt+5 to create a new mission for P1, Alt+6 for P2",
+		text = "In-game press Alt+5 to create a new mission",
 		x = 55,
 		y = 110,
 	},
@@ -782,7 +782,7 @@ local ERROR_MSG_FRAMELIMIT = 600
 local error_msg_fcount = 0
 
 local function resetErrorMsg()
-	guipages.missions_hub.infos.text = "In-game press Alt+5 to create a new mission for P1, Alt+6 for P2"
+	guipages.missions_hub.infos.text = "In-game press Alt+5 to create a new mission"
 	guipages.save_mission.infos.text = ""
 	error_msg_fcount = 0
 end
@@ -818,7 +818,7 @@ local function drawTxt()
 	gui.text(92,84,mission_text2)
 end
 
-if REPLAY then showTxt(240, "For replay takeover, press Alt+5 to record a mission for P1", "or Alt+6 for P2") end
+if REPLAY then showTxt(240, "For replay takeover, press Alt+5 to record a mission", "") end
 -----------------------------------
 -----------------------------------
 --		Main
@@ -970,15 +970,10 @@ guipages.save_mission[3].func = saveMission
 local frame_delay = 0
 local timer = 0
 local random_slot = 1
-local missionSide
 
 local function playMission(mission) -- mission[1] = dirname / [2] = mission's name
 	if frame_delay < 3 then frame_delay = 3 end -- to be sure that we can reroll a mission
 	if not recording.playback then
-		local sData = table.load("./missionSide.txt")
-		if (timer == 0 and sData.s == 2) then
-			toggleSwapInputs(nil, {}) 
-		end
 		timer = timer + 1
 	end
 	if timer > frame_delay then
@@ -999,8 +994,6 @@ end
 
 local missions_checked = {} -- for loading
 local mission_selector = 0
-
-local missionSide = 1
 
 input.registerhotkey(5, function()
 	if (not REPLAY) then
@@ -1034,7 +1027,6 @@ input.registerhotkey(5, function()
 			local mission_savestate = savestate.create("new_savestate")
 			savestate.save(mission_savestate)
 			recording.replayP1 = true
-			-- recording.replayP2 = false
 			toggleRecording(nil, {})
 			recording.replayP1 = false
 			local txt1 = "RECORDING STARTED..."
@@ -1054,76 +1046,6 @@ input.registerhotkey(5, function()
 			REPLAY=false
 			mission_selector = 1
 			missions_checked[1] = loadMissionTakeover()
-			local missionSide = {}
-			missionSide.s = 1
-			table.save(missionSide, "./missionSide.txt")
-			playMission(missions_checked[1])
-			local txt1 = "RECORDED "..recorded.." frames."
-			local txt2 = "To take over load: Add-On > Missions > REPLAY_"..r_frame
-			showTxt(480, txt1, txt2)
-			--r_frame = 0
-		end
-	end
-end)
-
-
-
-input.registerhotkey(6, function()
-	if (not REPLAY) then
-		--open the popup saving a mission
-		if not interactivegui.enabled then
-			local mission_savestate = savestate.create("new_savestate")
-			savestate.save(mission_savestate)
-			insertSlotButtons()
-			if #save_mission > 3 then -- at least one slot button has been inserted
-				-- backup
-				backup_page = interactivegui.page
-				backup_selection = interactivegui.selection
-				backup_previouspage = interactivegui.previouspage
-				backup_previousselection = interactivegui.previousselection
-				-- Opening the popup
-				interactivegui.page = "save_mission"
-				interactivegui.previouspage = "save_mission"
-				interactivegui.selection = 1
-				toggleInteractiveGUI(true, {})
-			else
-				local txt1 = "In order to create a mission you have to record an action."
-				local txt2 = "Double tap coin or go to Replay Editor"
-				showTxt(360, txt1, txt2)
-			end
-		end
-		return
-
-	else
-		-- auto-save a mission from a replay
-		if (r_frame == 0) then
-			missionSide = 2
-			local mission_savestate = savestate.create("new_savestate")
-			savestate.save(mission_savestate)
-			recording.replayP1 = true
-			recording.replayP2 = false
-			toggleRecording(nil, {})
-			-- recording.replayP1 = false
-			local txt1 = "RECORDING STARTED..."
-			local txt2 = "Press Alt+6 to stop recording and save the mission."
-			showTxt(480, txt1, txt2)
-			r_frame = emu.framecount()
-		else
-			toggleRecording(nil, {})
-			frame_end = emu.framecount()
-			local recorded = frame_end - r_frame
-			guipages.save_mission.frame.text = 150
-			guipages.save_mission.name.text = "REPLAY_"..r_frame
-			slot_buttons[1].text=1
-			slot_buttons[1].checked = true
-			saveMission()
-			emu.takeover()
-			REPLAY=false
-			mission_selector = 1
-			missions_checked[1] = loadMissionTakeover()
-			local missionSide = {}
-			missionSide.s = 2
-			table.save(missionSide, "./missionSide.txt")
 			playMission(missions_checked[1])
 			local txt1 = "RECORDED "..recorded.." frames."
 			local txt2 = "To take over load: Add-On > Missions > REPLAY_"..r_frame

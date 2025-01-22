@@ -1,5 +1,5 @@
 -- List of addons to be played, if available
 addons_run = {
-	"missions.lua"
-	-- "rewind.lua",
+	"missions.lua",
+	"rewind.lua",
 }
